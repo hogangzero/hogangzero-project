@@ -1,5 +1,10 @@
 import streamlit as st
 
+import run_home
+import source_price
+import species_price
+import status_price
+
 def main():
     st.title('Seafood forecasting')
 
