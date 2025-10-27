@@ -15,7 +15,7 @@ def main():
     
 
     if choice == menu[0]:
-        pass
+        run_home()
     elif choice == menu[1]:
         sub_choice = st.sidebar.selectbox('경락가', sub_menu)
         if sub_choice == sub_menu[0] :
