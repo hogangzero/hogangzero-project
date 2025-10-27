@@ -2,7 +2,7 @@ import streamlit as st
 
 import run_home
 import source_price
-import species_price
+from species_price import species_price
 import status_price
 
 def main():
@@ -15,15 +15,15 @@ def main():
     
 
     if choice == menu[0]:
-        run_home()
+        pass
     elif choice == menu[1]:
         sub_choice = st.sidebar.selectbox('경락가', sub_menu)
         if sub_choice == sub_menu[0] :
-            species_price() # 어종별 경락가
+            pass # 어종별 경락가
         elif sub_choice == sub_menu[1] :
-            source_price() # 산지별 경락가
+            pass # 산지별 경락가
         elif sub_choice == sub_menu[2] :
-            status_price() # 상태별 경락가
+            pass # 상태별 경락가
         
     elif choice == menu[2]:
         pass
