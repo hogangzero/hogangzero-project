@@ -100,7 +100,7 @@ filtered_df = df[df['산지'] == 선택_산지_1]
 
 # 시각화 
 fig, ax = plt.subplots(figsize=(10, 6))
-ax.bar(filtered_df['어종'], filtered_df['평균가'])
+ax.bar(filtered_df['파일어종'], filtered_df['평균가'])
 ax.set_xlabel('어종')
 ax.set_ylabel('평균 경락가')
 ax.set_title(f'{선택_산지_1} 산지 어종별 평균 경락가')
