@@ -1,18 +1,15 @@
 import streamlit as st
 
-
-
 from app_home import run_home
-from app_source import source_price # 산지별 경락가
 # from app_species import species_price # 어종별 경락가
-from app_status import status_price # 상태별 경락가
-from run_species import species_price
+from app_species import species_price
+from app_source import source_price
 
 def main():
     st.title('Seafood forecasting')
 
     menu = ['Home', '경락가', 'ML', '정보']
-    sub_menu = ['어종별 경락가', '산지별 경락가', '상태별(활어, 선어, 냉동) 경락가']
+    sub_menu = ['어종별 경락가', '산지별 경락가']
 
     choice = st.sidebar.selectbox('메뉴', menu)
     
@@ -24,9 +21,7 @@ def main():
         if sub_choice == sub_menu[0] :
             species_price() # 어종별 경락가
         elif sub_choice == sub_menu[1] :
-            source_price() # 산지별 경락가
-        elif sub_choice == sub_menu[2] :
-            source_price() # 상태별 경락가
+            source_price() # 산지별 경락가 
         
     elif choice == menu[2]:
         pass
