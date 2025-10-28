@@ -1,16 +1,147 @@
-import streamlit as st
+import os
+import re
+import io
 import joblib
+import streamlit as st
 import matplotlib.pyplot as plt
+import pandas as pd
 from prophet import Prophet
 
+
+def _clean_price_series(s):
+    # 문자열로 된 가격에서 쉼표와 따옴표 제거 후 float 변환
+    if s.dtype == object:
+        return s.fillna('0').astype(str).str.replace(r"[^0-9.-]", "", regex=True).replace('', '0').astype(float)
+    return s.astype(float)
+
+
 def run_ml():
-    st.header('날짜별 어종 경락가 예측')
+    """Streamlit app: 어종별 월별 경락가를 Prophet으로 학습/예측합니다.
 
-    model = joblib.load('./model.pkl')
+    사용법(간단):
+    - 좌측에서 어종을 선택
+    - 예측할 연수(예: 3년)를 선택하면 월 단위로 (연수*12)개월을 예측
+    - '모델 재학습' 체크박스를 켜면 기존 저장 모델을 덮어써서 재학습합니다.
 
-    future = model.make_future_dataframe(periods=12, freq='M')  # 향후 12개월 예측
+    데이터: 프로젝트의 `data/수산물_통합_전처리.csv` 파일을 사용합니다.
+    컬럼: 'date' (YYYY-MM-DD), '공통어종' (어종 그룹), '평균가' (숫자, 쉼표 포함) 가 필요합니다.
+    """
+
+    st.header('어종별 월별 경락가 예측 (Prophet)')
+
+    data_path = os.path.join('data', '수산물_통합전처리_3컬럼.csv')
+    if not os.path.exists(data_path):
+        st.error(f'데이터 파일이 없습니다: {data_path}')
+        return
+
+    # 데이터 로드
+    df = pd.read_csv(data_path)
+
+    # 예상되는 컬럼 확인
+    needed = ['date', '파일어종', '평균가']
+    if not all(c in df.columns for c in needed):
+        st.error(f'데이터에 필요한 컬럼이 없습니다. 필요: {needed}. 현재 컬럼: {list(df.columns)}')
+        return
+
+    # 전처리: 날짜 파싱, 평균가 정리
+    df['date'] = pd.to_datetime(df['date'], errors='coerce')
+    df = df.dropna(subset=['date'])
+    df['평균가'] = _clean_price_series(df['평균가'])
+
+    species_list = sorted(df['파일어종'].dropna().unique())
+    species = st.sidebar.selectbox('어종 선택', species_list)
+
+    years_to_forecast = st.sidebar.slider('예측 기간 (년)', min_value=1, max_value=10, value=3)
+    retrain = st.sidebar.checkbox('모델 재학습 (강제)', value=False)
+    months = years_to_forecast * 12
+
+    # 모델 디렉터리
+    model_dir = os.path.join('.', 'models')
+    os.makedirs(model_dir, exist_ok=True)
+    model_file = os.path.join(model_dir, f'model_{re.sub(r"[^0-9a-zA-Z가-힣_]","_", species)}.pkl')
+
+    # 선택한 어종 데이터 월 단위 집계 (평균)
+    df_sp = df[df['공통어종'] == species].copy()
+    if df_sp.empty:
+        st.warning('선택한 어종에 대한 데이터가 없습니다.')
+        return
+
+    df_sp.set_index('date', inplace=True)
+    monthly = df_sp['평균가'].resample('M').mean().reset_index()
+    monthly = monthly.dropna()
+    monthly = monthly.rename(columns={'date': 'ds', '평균가': 'y'})
+
+    st.subheader(f'{species} - 학습 데이터 (월별 평균, 관측치 수: {len(monthly)})')
+    st.dataframe(monthly.tail(12))
+
+    model = None
+    if os.path.exists(model_file) and (not retrain):
+        try:
+            model = joblib.load(model_file)
+            st.info('저장된 모델을 불러왔습니다.')
+        except Exception as e:
+            st.warning(f'저장된 모델 로드 실패: {e}. 재학습을 진행합니다.')
+            model = None
+
+    if model is None:
+        with st.spinner('Prophet 모델 학습 중...'):
+            model = Prophet(yearly_seasonality=True, weekly_seasonality=False, daily_seasonality=False)
+            # Prophet 기본으로도 월별 패턴을 잡지만 필요시 커스텀 시즌 추가 가능
+            try:
+                model.fit(monthly)
+                joblib.dump(model, model_file)
+                st.success('모델 학습 완료 및 저장되었습니다.')
+            except Exception as e:
+                st.error(f'모델 학습 실패: {e}')
+                return
+
+    # 예측
+    future = model.make_future_dataframe(periods=months, freq='M')
     forecast = model.predict(future)
+
+    st.subheader('예측 결과')
+    # matplotlib figure 출력
+    fig = model.plot(forecast)
+    st.pyplot(fig)
+
+    # 예측값 테이블 (월별) 제공
+    forecast_monthly = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].copy()
+    forecast_monthly['ds'] = pd.to_datetime(forecast_monthly['ds']).dt.to_period('M').dt.to_timestamp()
     
+    # 연도/월별 예측 결과를 텍스트로 표시
+    st.subheader("연도/월별 예측 가격")
+    last_training_date = monthly['ds'].max()
+    future_forecasts = forecast_monthly[forecast_monthly['ds'] > last_training_date]
     
-    model.plot(forecast)
-    
+    # 연도별로 그룹화
+    for year in future_forecasts['ds'].dt.year.unique():
+        year_data = future_forecasts[future_forecasts['ds'].dt.year == year]
+        st.markdown(f"### {year}년")
+        
+        # 월별 예측값
+        for _, row in year_data.iterrows():
+            month = row['ds'].month
+            predicted_price = row['yhat']
+            lower_bound = row['yhat_lower']
+            upper_bound = row['yhat_upper']
+            
+            st.write(f"{species}의 {year}년 {month}월 예측 가격: {predicted_price:,.0f}원")
+            st.write(f"(신뢰구간: {lower_bound:,.0f}원 ~ {upper_bound:,.0f}원)")
+        st.markdown("---")
+
+    # 테이블로도 전체 데이터 표시
+    st.subheader("예측 결과 테이블")
+    st.dataframe(forecast_monthly.tail(months + 6))
+
+    # CSV 다운로드
+    csv_buf = io.StringIO()
+    forecast_monthly.to_csv(csv_buf, index=False)
+    csv_bytes = csv_buf.getvalue().encode('utf-8')
+    st.download_button(label='예측 결과 다운로드 (CSV)', data=csv_bytes, file_name=f'forecast_{species}.csv', mime='text/csv')
+
+    st.markdown('---')
+    st.markdown('### 노트')
+    st.markdown('- 데이터는 `data/수산물_통합_전처리.csv`의 `공통어종` 및 `평균가`를 사용하여 월별 평균을 계산합니다.')
+    st.markdown('- 모델 파일은 `models/model_{species}.pkl`로 저장됩니다. 재학습하려면 왼쪽의 `모델 재학습`을 체크하세요.')
+
+        

@@ -88,65 +88,66 @@ ex. 제주산 전복의 평균 경매가 // 특정 산지에서 품질이 좋은
 # ---------------------------------------------------
 # 1. source
 # ---------------------------------------------------
+def source():
+    st.header("1. 산지별 어종 평균 경락가")
 
-st.header("1. 산지별 어종 평균 경락가")
+    # 셀렉트박스 - (원양) 포함 산지를 맨 밑으로
+    산지_목록_전체 = df['산지'].unique()
+    산지_일반 = sorted([x for x in 산지_목록_전체 if '(원양)' not in str(x)])  #  (원양) 제외하고 정렬
+    산지_원양 = sorted([x for x in 산지_목록_전체 if '(원양)' in str(x)])      #  (원양) 포함 정렬
+    산지_목록 = 산지_일반 + 산지_원양  #  일반 산지 + 원양 산지 순서로 결합
 
-# 셀렉트박스 - (원양) 포함 산지를 맨 밑으로
-산지_목록_전체 = df['산지'].unique()
-산지_일반 = sorted([x for x in 산지_목록_전체 if '(원양)' not in str(x)])  #  (원양) 제외하고 정렬
-산지_원양 = sorted([x for x in 산지_목록_전체 if '(원양)' in str(x)])      #  (원양) 포함 정렬
-산지_목록 = 산지_일반 + 산지_원양  #  일반 산지 + 원양 산지 순서로 결합
+    선택_산지_1 = st.selectbox('산지를 선택하세요', 산지_목록)
 
-선택_산지_1 = st.selectbox('산지를 선택하세요', 산지_목록)
+    # 선택한 산지 데이터 필터링
+    filtered_df = df[df['산지'] == 선택_산지_1]
 
-# 선택한 산지 데이터 필터링
-filtered_df = df[df['산지'] == 선택_산지_1]
-
-# 시각화 
-fig, ax = plt.subplots(figsize=(10, 6))
-ax.bar(filtered_df['파일어종'], filtered_df['평균가'])
-ax.set_xlabel('어종')
-ax.set_ylabel('평균 경락가')
-ax.set_title(f'{선택_산지_1} 산지 어종별 평균 경락가', fontsize=14)
-plt.xticks(rotation=45, ha='right')
-plt.tight_layout()
-st.pyplot(fig)
+    # 시각화 
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.bar(filtered_df['파일어종'], filtered_df['평균가'])
+    ax.set_xlabel('어종')
+    ax.set_ylabel('평균 경락가')
+    ax.set_title(f'{선택_산지_1} 산지 어종별 평균 경락가', fontsize=14)
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    st.pyplot(fig)
 
 # ---------------------------------------------------
 # 2. source_species
 # ---------------------------------------------------
 
-st.header("2. 특정 산지 + 품종의 월별 경락가 추이")
-품종_목록 = sorted(df['어종'].unique())
+def source_species():
+    st.header("2. 특정 산지 + 품종의 월별 경락가 추이")
+    품종_목록 = sorted(df['어종'].unique())
 
-# 셀렉트박스
-col1, col2 = st.columns(2)
-with col1:
-    선택_품종 = st.selectbox('품종을 선택하세요', 품종_목록, key='품종')
+    # 셀렉트박스
+    col1, col2 = st.columns(2)
+    with col1:
+        선택_품종 = st.selectbox('품종을 선택하세요', 품종_목록, key='품종')
 
-with col2:
-    산지_목록_전체_2 = df['산지'].unique()
-    #(원양) 포함 산지를 맨 밑으로 정렬
-    산지_일반_2 = sorted([x for x in 산지_목록_전체_2 if '(원양)' not in str(x)])
-    산지_원양_2 = sorted([x for x in 산지_목록_전체_2 if '(원양)' in str(x)])
-    산지_목록_2 = 산지_일반_2 + 산지_원양_2
-    
-    선택_산지_2 = st.selectbox('산지를 선택하세요', 산지_목록_2, key='산지2')
+    with col2:
+        산지_목록_전체_2 = df['산지'].unique()
+        #(원양) 포함 산지를 맨 밑으로 정렬
+        산지_일반_2 = sorted([x for x in 산지_목록_전체_2 if '(원양)' not in str(x)])
+        산지_원양_2 = sorted([x for x in 산지_목록_전체_2 if '(원양)' in str(x)])
+        산지_목록_2 = 산지_일반_2 + 산지_원양_2
+        
+        선택_산지_2 = st.selectbox('산지를 선택하세요', 산지_목록_2, key='산지2')
 
 
-# 필터링
-filtered_df_2 = df[(df['산지'] == 선택_산지_2) & (df['어종'] == 선택_품종)]
+    # 필터링
+    filtered_df_2 = df[(df['산지'] == 선택_산지_2) & (df['어종'] == 선택_품종)]
 
-# 시각화 
-if len(filtered_df_2) > 0:
-    monthly_avg = filtered_df_2.groupby('month')['평균가'].mean().reset_index()
-    
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(monthly_avg['month'], monthly_avg['평균가'], marker='o')
-    ax.set_xlabel('월')
-    ax.set_ylabel('평균 경락가')
-    ax.set_title(f'{선택_산지_2} 산지의 {선택_품종} 월별 평균 경락가', fontsize=14)
-    plt.tight_layout()
-    st.pyplot(fig)
-else:
-    st.warning("날짜 컬럼이 없거나 데이터가 유효하지 않아 월별 그래프를 그릴 수 없습니다.")
+    # 시각화 
+    if len(filtered_df_2) > 0:
+        monthly_avg = filtered_df_2.groupby('month')['평균가'].mean().reset_index()
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(monthly_avg['month'], monthly_avg['평균가'], marker='o')
+        ax.set_xlabel('월')
+        ax.set_ylabel('평균 경락가')
+        ax.set_title(f'{선택_산지_2} 산지의 {선택_품종} 월별 평균 경락가', fontsize=14)
+        plt.tight_layout()
+        st.pyplot(fig)
+    else:
+        st.warning("날짜 컬럼이 없거나 데이터가 유효하지 않아 월별 그래프를 그릴 수 없습니다.")
