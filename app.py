@@ -3,7 +3,7 @@ import streamlit as st
 from app_home import run_home
 from app_ml import run_ml
 from app_species import species_price
-from app_source import source, source_species
+from app_source import source, source_species, source_price
 
 def main():
 
@@ -25,6 +25,7 @@ def main():
         if sub_choice == sub_menu[0] :
             species_price() # 어종별 경락가
         elif sub_choice == sub_menu[1] :
+            source_price()
             source() # 산지별 경락가
             source_species()
         
