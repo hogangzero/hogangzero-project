@@ -2,10 +2,10 @@ import streamlit as st
 
 
 
-from run_home import run_home
-# from run_source import source_price # 산지별 경락가
-from run_species import species_price # 어종별 경락가
-# from run_status import status_price # 상태별 경락가
+from app_home import run_home
+from app_source import source_price # 산지별 경락가
+from app_species import species_price # 어종별 경락가
+from app_status import status_price # 상태별 경락가
 
 def main():
     st.title('Seafood forecasting')
@@ -23,9 +23,9 @@ def main():
         if sub_choice == sub_menu[0] :
             species_price() # 어종별 경락가
         elif sub_choice == sub_menu[1] :
-            pass # 산지별 경락가
+            source_price() # 산지별 경락가
         elif sub_choice == sub_menu[2] :
-            pass # 상태별 경락가
+            source_price() # 상태별 경락가
         
     elif choice == menu[2]:
         pass
