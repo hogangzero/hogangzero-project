@@ -7,7 +7,8 @@ from app_source import source, source_species, source_price
 
 def main():
 
-    st.title('')
+    st.subheader('')
+
 
     menu = ['Home', 'price trend', 'ML', 'information']
     sub_menu = ['어종별 경락가', '산지별 경락가']
