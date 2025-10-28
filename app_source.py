@@ -90,7 +90,7 @@ def source_price():
 
     # 시각화
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.bar(filtered_df['파일어종'], filtered_df['평균가'])
+    ax.bar(filtered_df['파일어종'], filtered_df['평균가'],color="#f57d87")
     ax.set_xlabel('어종')
     ax.set_ylabel('평균 경락가')
     ax.set_title(f'{선택_산지_1} 산지 어종별 평균 경락가', fontsize=14)
@@ -99,11 +99,16 @@ def source_price():
     st.pyplot(fig)
 
     # ---------------------------------------------------
-    # 2. 특정 산지 + 품종의 월별 경락가 추이
+    # 2. 거래량 상위 10개 품목 및 품목별 상위 5개 산지
     # ---------------------------------------------------
-    st.header("2. 특정 산지 + 품종의 월별 경락가 추이")
+    st.header("2. 거래량 상위 10개 품목 및 품목별 상위 5개 산지")
 
-    품종_목록 = sorted(df['어종'].unique())
+    #  거래량 계산 (데이터 개수 또는 평균가 합계로 판단)
+    # 방법 1: 데이터 개수 기준
+    품종별_거래량 = df.groupby('어종').size().reset_index(name='거래량')
+    상위_품종 = 품종별_거래량.nlargest(10, '거래량')['어종'].tolist()
+
+    품종_목록 = sorted(상위_품종)
 
     # 선택 UI
     col1, col2 = st.columns(2)
@@ -111,11 +116,20 @@ def source_price():
         선택_품종 = st.selectbox('품종을 선택하세요', 품종_목록, key='품종')
 
     with col2:
-        산지_목록_전체_2 = df['산지'].unique()
-        산지_일반_2 = sorted([x for x in 산지_목록_전체_2 if '(원양)' not in str(x)])
-        산지_원양_2 = sorted([x for x in 산지_목록_전체_2 if '(원양)' in str(x)])
+        품종_데이터 = df[df['어종'] == 선택_품종]
+        산지별_거래량 = 품종_데이터.groupby('산지').size().reset_index(name='거래량')
+        상위_산지 = 산지별_거래량.nlargest(5, '거래량')['산지'].tolist()
+
+        # (원양) 분리 및 정렬
+        산지_일반_2 = sorted([x for x in 상위_산지 if '(원양)' not in str(x)])
+        산지_원양_2 = sorted([x for x in 상위_산지 if '(원양)' in str(x)])
         산지_목록_2 = 산지_일반_2 + 산지_원양_2
-        선택_산지_2 = st.selectbox('산지를 선택하세요', 산지_목록_2, key='산지2')
+    
+        선택_산지_2 = st.selectbox(
+            f'산지를 선택하세요 ({선택_품종} 거래량 상위 5개)', 
+            산지_목록_2, 
+            key='산지2'
+        )
 
     # 필터링
     filtered_df_2 = df[(df['산지'] == 선택_산지_2) & (df['어종'] == 선택_품종)]
