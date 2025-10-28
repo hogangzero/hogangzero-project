@@ -262,10 +262,8 @@ def species_price():
             if len(available_states) == 1:
                 selected_state = available_states[0]
                 st.info(f"이 품종은 '{selected_state}' 상태의 데이터만 있습니다.")
-            else:
-                    selected_state = st.radio(
-                        "상태 선택",
-                selected_state = st.radio("상태를 선택하세요", available_states, horizontal=True))
+            else: 
+                selected_state = st.radio( "상태를 선택하세요", available_states, horizontal=True, key="radio_state_section2")
 
             
             # 선택된 품종과 상태로 완성된 이름 생성
