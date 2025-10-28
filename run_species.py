@@ -39,6 +39,15 @@ DATE_TICK_STEP = 3  # 날짜 라벨 표시 간격
 # 데이터 로딩 및 전처리 함수
 # ============================================================
 
+def extract_state_and_species(species_name):
+    """상태와 품종을 분리"""
+    import re
+    # (상태)품종 형식에서 상태와 품종을 분리
+    match = re.match(r'\((활|선|냉)\)(.+)', species_name)
+    if match:
+        return match.group(1), match.group(2)  # 상태, 품종
+    return '', species_name  # 상태 구분이 없는 경우
+
 def load_and_preprocess_data(path):
     """CSV 파일 로딩 및 전처리"""
     df = pd.read_csv(path)
@@ -167,8 +176,8 @@ def species_price():
     # -------------------------------------------------
     # ① 어종별 일별 경락가 변동 추이
     # -------------------------------------------------
-    st.subheader("① 어종별 일별 경락가 변동 추이")
-    species = st.selectbox("어종을 선택하세요", sorted(df['파일어종'].unique()))
+    st.subheader("①  어종별 경락가 변동 ")
+    species = st.selectbox(" 어종을 선택하세요 ", sorted(df['파일어종'].unique()))
 
     col1, col2 = st.columns(2)
     with col1:
@@ -183,9 +192,15 @@ def species_price():
     if st.session_state.section1_show:
         result = filter_by_species(df, '파일어종', species)
         if result is not None:
-            st.dataframe(result.head(20))
+            # 표시용 데이터프레임 생성
+            display_df = result.reset_index()
+            display_df['date'] = display_df['date'].dt.strftime('%Y-%m-%d')
+            display_df = display_df.rename(columns={'date': '기준날짜'})
+            # 인덱스 리셋 후 표시
+            display_df = display_df.head(20).reset_index(drop=True)
+            st.dataframe(display_df)
             selected_metrics = st.multiselect(
-                "보고 싶은 가격 항목 선택", ['평균가', '낙찰고가', '낙찰저가'], default=['평균가'])
+                "가격 항목을 선택하세요 ~", ['평균가', '낙찰고가', '낙찰저가'], default=['평균가'])
             plot_metrics(result, selected_metrics, f"{species} 가격 추이")
         else:
             st.warning("해당 어종 데이터가 100개 이하입니다.")
@@ -199,10 +214,10 @@ def species_price():
     # -------------------------------------------------
     # ② 파일어종 및 세부 어종별 낙찰가 비교
     # -------------------------------------------------
-    st.subheader("② 파일어종 및 하위 어종별 낙찰가 비교")
+    st.subheader("② 품종 및 상태별 경락가 ")
     file_species = st.selectbox(
-        "파일어종을 선택하세요", sorted(df.groupby('파일어종').size()[lambda x: x > 100].index))
-
+        "어종을 선택하세요 .", sorted(df.groupby('파일어종').size()[lambda x: x > 100].index))
+    
     col3, col4 = st.columns(2)
     with col3:
         if not st.session_state.section2_show:
@@ -215,12 +230,60 @@ def species_price():
 
     if st.session_state.section2_show:
         subset = df[df['파일어종'] == file_species]
-        valid_species = subset.groupby('어종').size()[lambda x: x > 100].index.tolist()
-        species = st.selectbox("세부 어종을 선택하세요", sorted(valid_species))
+        
+        # 어종별로 품종과 상태 분리하여 정리하고 데이터가 100개 이상인 경우만 포함
+        species_info = {}
+        for species_name in subset['어종'].unique():
+            state, pure_species = extract_state_and_species(species_name)
+            if state:  # 상태 정보가 있는 경우
+                # 해당 상태와 품종의 데이터 수 확인
+                species_count = len(subset[subset['어종'] == species_name])
+                if species_count >= 100:  # 데이터가 100개 이상인 경우만 저장
+                    if pure_species not in species_info:
+                        species_info[pure_species] = set()
+                    species_info[pure_species].add(state)
+        
+        # 순수 품종 목록 (상태 제외)
+        pure_species_list = sorted(species_info.keys())
+        
+        if pure_species_list:
+            # compact 품종 + 상태 layout: 품종 selectbox (narrow) + 상태 radio
+            col_species, col_state = st.columns([2.5, 1.5])
+            with col_species:
+                selected_pure_species = st.selectbox(
+                    "품종 선택",
+                    pure_species_list,
+                    key="pure_species_select",
+                    label_visibility="collapsed",
+                )
+            # 해당 품종의 가능한 상태 표시
+            available_states = sorted(species_info[selected_pure_species])
+            # 상태가 1개인 경우 바로 선택, 2개 이상인 경우만 라디오 버튼 표시
+            if len(available_states) == 1:
+                selected_state = available_states[0]
+                st.info(f"이 품종은 '{selected_state}' 상태의 데이터만 있습니다.")
+            else:
+                    selected_state = st.radio(
+                        "상태 선택",
+                selected_state = st.radio("상태를 선택하세요", available_states, horizontal=True))
+
+            
+            # 선택된 품종과 상태로 완성된 이름 생성
+            species = f"({selected_state}){selected_pure_species}"
+        else:
+            st.warning("분류 가능한 품종이 없습니다.")
+            st.stop()
+                
         if species:
             result = filter_by_species(subset, '어종', species)
             if result is not None:
-                st.dataframe(result.head(20))
+                # 표시용 데이터프레임 생성
+                display_df = result.reset_index()
+                display_df['date'] = display_df['date'].dt.strftime('%Y-%m-%d')
+                display_df = display_df.rename(columns={'date': '기준날짜'})
+                # 인덱스 리셋 후 표시
+                display_df = display_df.head(20).reset_index(drop=True)
+                st.dataframe(display_df)
                 plot_metrics(result, ['평균가', '낙찰고가', '낙찰저가'], f"{species} 낙찰가 시계열")
             else:
                 st.warning("데이터가 부족합니다.")
@@ -255,8 +318,23 @@ def species_price():
             st.stop()
 
         market_list = sorted(ocean_df['산지'].unique())
-        selected_market = st.selectbox("산지를 선택하세요", market_list)
-        selected_file_species = st.selectbox("어종(파일어종)을 선택하세요", sorted(df['파일어종'].unique()))
+        # compact: market selectbox + section reset next to it, then species selectbox
+        col_m, col_m_reset, col_s = st.columns([2.5, 0.8, 2.5])
+        with col_m:
+            selected_market = st.selectbox(
+                "산지 선택",
+                market_list,
+                key="market_section3",
+                label_visibility="collapsed",
+            )
+        
+        with col_s:
+            selected_file_species = st.selectbox(
+                "어종(파일어종) 선택",
+                sorted(df['파일어종'].unique()),
+                key="btn_reset_section3_market",
+                label_visibility="collapsed",
+            )
 
         species_monthly = (
             df[df['파일어종'] == selected_file_species]
@@ -277,7 +355,16 @@ def species_price():
             st.write(f"결합된 데이터 수: {len(merged)}")
             st.dataframe(merged, height=400)
 
-            ocean_vars = st.multiselect("비교할 해양 변수 선택", ocean_cols, default=['수온 평균'])
+            # compact ocean variable selector
+            col_vars, col_vars_spacer = st.columns([2.5, 1])
+            with col_vars:
+                ocean_vars = st.multiselect(
+                    "해양 변수",
+                    ocean_cols,
+                    default=['수온 평균'],
+                    key="ocean_vars_select",
+                    label_visibility="collapsed",
+                )
             if not ocean_vars:
                 st.warning("비교할 변수를 선택해주세요.")
             else:
