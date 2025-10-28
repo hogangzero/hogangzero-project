@@ -6,11 +6,15 @@ from app_species import species_price
 from app_source import source, source_species
 
 def main():
-    st.title('Seafood forecasting')
 
-    menu = ['Home', '경락가', 'ML', '정보']
+    st.title('')
+
+    menu = ['Home', 'price trend', 'ML', 'information']
     sub_menu = ['어종별 경락가', '산지별 경락가']
 
+
+    st.sidebar.title("- 호갱제로 -")
+    st.sidebar.title("")    
     choice = st.sidebar.selectbox('메뉴', menu)
     
 

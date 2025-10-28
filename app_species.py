@@ -163,7 +163,10 @@ def species_price():
       ② 어종 그룹별 낙찰가 비교
       ③ 해양데이터(수온, 기온, 풍속) 연계분석
     """
-    st.title('🐟 어종별 경락가 통합 분석 대시보드')
+    st.header('')
+    st.header('🐟 어종별 시세 분석 대시보드')
+    st.header('')
+
 
     # 1️⃣ CSV 데이터 로드 및 전처리
     df = load_and_preprocess_data('./data/수산물_통합전처리_3컬럼.csv')
@@ -197,7 +200,7 @@ def species_price():
             display_df['date'] = display_df['date'].dt.strftime('%Y-%m-%d')
             display_df = display_df.rename(columns={'date': '기준날짜'})
             # 인덱스 리셋 후 표시
-            display_df = display_df.head(20).reset_index(drop=True)
+            display_df = display_df.reset_index(drop=True)
             st.dataframe(display_df)
             selected_metrics = st.multiselect(
                 "가격 항목을 선택하세요 ~", ['평균가', '낙찰고가', '낙찰저가'], default=['평균가'])
@@ -280,7 +283,7 @@ def species_price():
                 display_df['date'] = display_df['date'].dt.strftime('%Y-%m-%d')
                 display_df = display_df.rename(columns={'date': '기준날짜'})
                 # 인덱스 리셋 후 표시
-                display_df = display_df.head(20).reset_index(drop=True)
+                display_df = display_df.reset_index(drop=True)
                 st.dataframe(display_df)
                 plot_metrics(result, ['평균가', '낙찰고가', '낙찰저가'], f"{species} 낙찰가 시계열")
             else:
@@ -371,6 +374,8 @@ def species_price():
         if st.button("닫기", key="btn_close_section3"):
             st.session_state.section3_show = False
             st.experimental_rerun()
+
+            st.text('데이터 출처')
 
 
 # ============================================================

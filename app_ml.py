@@ -26,8 +26,11 @@ def run_ml():
     데이터: 프로젝트의 `data/수산물_통합_전처리.csv` 파일을 사용합니다.
     컬럼: 'date' (YYYY-MM-DD), '공통어종' (어종 그룹), '평균가' (숫자, 쉼표 포함) 가 필요합니다.
     """
+    st.header('')
+    st.header('어종별 경락가 예측 대시보드')
+    st.header('')
 
-    st.header('어종별 월별 경락가 예측 (Prophet)')
+
 
     data_path = os.path.join('data', '수산물_통합전처리_3컬럼.csv')
     if not os.path.exists(data_path):

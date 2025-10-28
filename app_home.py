@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 
 def run_home():
-    st.header('기본 데이터 형태')
     df=pd.read_csv('./data/갈치csv/2021/2021-1.csv')
     st.dataframe(df)
 
