@@ -4,8 +4,9 @@ import streamlit as st
 
 from app_home import run_home
 from app_source import source_price # 산지별 경락가
-from app_species import species_price # 어종별 경락가
+# from app_species import species_price # 어종별 경락가
 from app_status import status_price # 상태별 경락가
+from run_species import species_price
 
 def main():
     st.title('Seafood forecasting')
