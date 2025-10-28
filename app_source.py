@@ -103,7 +103,7 @@ fig, ax = plt.subplots(figsize=(10, 6))
 ax.bar(filtered_df['파일어종'], filtered_df['평균가'])
 ax.set_xlabel('어종')
 ax.set_ylabel('평균 경락가')
-ax.set_title(f'{선택_산지_1} 산지 어종별 평균 경락가')
+ax.set_title(f'{선택_산지_1} 산지 어종별 평균 경락가', fontsize=14)
 plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
 st.pyplot(fig)
@@ -126,9 +126,6 @@ with col2:
 # 필터링
 filtered_df_2 = df[(df['산지'] == 선택_산지_2) & (df['어종'] == 선택_품종)]
 
-st.write(f"{선택_산지_2} 산지에서 {선택_품종}의 평균 경락가")
-st.dataframe(filtered_df_2)
-
 # 시각화 
 if len(filtered_df_2) > 0:
     monthly_avg = filtered_df_2.groupby('month')['평균가'].mean().reset_index()
@@ -137,7 +134,7 @@ if len(filtered_df_2) > 0:
     ax.plot(monthly_avg['month'], monthly_avg['평균가'], marker='o')
     ax.set_xlabel('월')
     ax.set_ylabel('평균 경락가')
-    ax.set_title(f'{선택_산지_2} 산지의 {선택_품종} 월별 평균 경락가')
+    ax.set_title(f'{선택_산지_2} 산지의 {선택_품종} 월별 평균 경락가', fontsize=14)
     plt.tight_layout()
     st.pyplot(fig)
 else:
