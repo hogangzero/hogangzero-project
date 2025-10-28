@@ -30,19 +30,19 @@ def source_price():
 
 
 
-    # ============================================================
-    # 데이터 로딩 및 전처리 함수
-    # ============================================================
-    @st.cache_data
-    def load_data():
-        try:
-            df = pd.read_csv('data/수산물_통합전처리_3컬럼.csv')
-
-            # 문자열 → 숫자 변환 및 반올림(정수)
-            price_cols = ['낙찰고가', '낙찰저가', '평균가']
-            for col in price_cols:
-                df[col] = df[col].astype(str).str.replace(',', '', regex=True)
-                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).round(0).astype(int)
+# ============================================================
+# 데이터 로딩 및 전처리 함수
+# ============================================================
+@st.cache_data # 캐싱 데코레이터
+def source_price():
+    try:
+        df = pd.read_csv('data/수산물_통합전처리_3컬럼.csv')
+        
+        # 문자열 → 숫자 변환 및 반올림(정수)
+        price_cols = ['낙찰고가', '낙찰저가', '평균가']
+        for col in price_cols:
+            df[col] = df[col].astype(str).str.replace(',', '', regex=True)
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).round(0).astype(int)
 
             # 날짜 처리
             df['date'] = pd.to_datetime(df['date'])
@@ -54,8 +54,8 @@ def source_price():
             st.error(f"데이터 로드 중 오류 발생: {e}")
             return None
 
-    # 데이터 로드
-    df = load_data()
+# 데이터 로드
+df = source_price()
 
     if df is None:
         st.error("데이터를 불러올 수 없습니다. 파일 경로를 확인해주세요.")
