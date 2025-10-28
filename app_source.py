@@ -35,7 +35,7 @@ DATE_TICK_STEP = 3  # 날짜 라벨 표시 간격
 # 데이터 로딩 및 전처리 함수
 # ============================================================
 @st.cache_data # 캐싱 데코레이터
-def source_price():
+def load_data():
     try:
         df = pd.read_csv('data/수산물_통합전처리_3컬럼.csv')
         
@@ -57,7 +57,7 @@ def source_price():
         return None
 
 # 데이터 로드
-df = source_price()
+df = load_data()
 
 if df is None:
     st.error("데이터를 불러올 수 없습니다. 파일 경로를 확인해주세요.")
