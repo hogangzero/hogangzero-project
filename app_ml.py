@@ -21,7 +21,6 @@ def run_ml():
     사용법(간단):
     - 좌측에서 어종을 선택
     - 예측할 연수(예: 3년)를 선택하면 월 단위로 (연수*12)개월을 예측
-    - '모델 재학습' 체크박스를 켜면 기존 저장 모델을 덮어써서 재학습합니다.
 
     데이터: 프로젝트의 `data/수산물_통합_전처리.csv` 파일을 사용합니다.
     컬럼: 'date' (YYYY-MM-DD), '공통어종' (어종 그룹), '평균가' (숫자, 쉼표 포함) 가 필요합니다.
@@ -29,12 +28,17 @@ def run_ml():
     # 간단한 스타일링: 가운데 정렬된 제목과 서브타이틀
     st.markdown(
         "<div style='text-align:center; padding:6px 0 0 0'>"
-        "<h1 style='margin:0'>어종별 경락가 예측 대시보드</h1>"
-        "<p style='color:gray; margin:0'>Prophet 모델을 이용한 월별 예측 및 주요월(분기) 요약</p>"
+        "<h1 style='margin:0'>날짜별 가격 예측</h1>"
+        "<p style='color:gray; margin:0'>Prophet 모델을 이용한 월별 예측</p>"
         "</div>",
         unsafe_allow_html=True,
     )
+    st.header('')
 
+    st.markdown('---')
+    
+    
+    
 
 
     data_path = os.path.join('data', '수산물_통합전처리_3컬럼.csv')
@@ -59,14 +63,16 @@ def run_ml():
     species_list = sorted(df['파일어종'].dropna().unique())
     species = st.sidebar.selectbox('어종 선택', species_list)
 
-    st.sidebar.header('모델 설정')
+    
     years_to_forecast = st.sidebar.slider('예측 기간 (년)', min_value=1, max_value=10, value=3)
     retrain = st.sidebar.checkbox('모델 재학습 (강제)', value=False)
     months = years_to_forecast * 12
 
     # 주요 월을 사용자가 선택할 수 있도록 함 (디자이너처럼 기본은 3,6,9,12)
-    months_to_show = st.sidebar.multiselect('주요 월 선택 (표시)', options=list(range(1, 13)), default=[3, 6, 9, 12])
+    
+    months_with_label = [f"{m}월" for m in range(1, 13)]
 
+    months_to_show = st.sidebar.multiselect('주요 월 선택', options=months_with_label,default=["3월", "6월", "9월", "12월"])
     # 모델 관련 정보와 도움말
     st.sidebar.markdown('---')
     st.sidebar.markdown('Tip: 주요 월을 선택하여 각 연도의 핵심 시점을 빠르게 확인하세요.')
@@ -178,6 +184,6 @@ def run_ml():
     st.markdown('---')
     st.markdown('### 노트')
     st.markdown('- 데이터는 `data/수산물_통합_전처리.csv`의 `공통어종` 및 `평균가`를 사용하여 월별 평균을 계산합니다.')
-    st.markdown('- 모델 파일은 `models/model_{species}.pkl`로 저장됩니다. 재학습하려면 왼쪽의 `모델 재학습`을 체크하세요.')
+
 
         

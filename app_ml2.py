@@ -56,8 +56,8 @@ def run_ml2():
     # Header
     st.markdown("""
     <div style='text-align:center'>
-      <h1 style='margin:6px 0'>피처 기반 평균가 예측</h1>
-      <p style='color:gray;margin:0'>파일어종, 산지, 규격, 포장, 수량, 중량을 입력하면 평균가를 예측합니다.</p>
+    <h1 style='margin:6px 0'>상세 가격 예측</h1>
+    <p style='color:gray;margin:0'>어종, 산지, 규격, 포장, 수량, 중량을 입력하면 상세한 평균 가격을 예측합니다.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -79,36 +79,37 @@ def run_ml2():
             st.error(f'모델 준비 실패: {e}')
             return
 
-    st.success(f'모델 {status} 완료')
-
     # Sidebar inputs
-    st.sidebar.header('입력값')
+    st.sidebar.header('상세 선택')
     files = sorted(df['파일어종'].dropna().unique())
     areas = sorted(df['산지_그룹화'].dropna().unique())
     sizes = sorted(df['규격_등급'].dropna().unique())
     packages = sorted(df['포장_분류'].dropna().unique())
 
     sel_file = st.sidebar.selectbox('어종', files, index=0)
-    sel_area = st.sidebar.selectbox('산지_그룹화', areas, index=0)
-    sel_size = st.sidebar.selectbox('규격_등급', sizes, index=0)
-    sel_pack = st.sidebar.selectbox('포장_분류', packages, index=0)
+    sel_area = st.sidebar.selectbox('원산지', areas, index=0)
+    sel_size = st.sidebar.selectbox('규격 등급', sizes, index=0)
+    sel_pack = st.sidebar.selectbox('포장 상태', packages, index=0)
     qty = st.sidebar.number_input('수량', min_value=0.0, value=1.0, step=1.0)
     weight = st.sidebar.number_input('중량(kg)', min_value=0.0, value=1.0, step=0.1)
 
     # Main area: predict button and results
+    st.header('')
     st.markdown('---')
+    
     left, right = st.columns([2,1])
 
     with left:
-        st.subheader('입력 요약')
+        st.subheader('설정 목록')
         st.write(f'- 어종: **{sel_file}**')
         st.write(f'- 산지 그룹: **{sel_area}**')
         st.write(f'- 규격 등급: **{sel_size}**')
         st.write(f'- 포장: **{sel_pack}**')
         st.write(f'- 수량: **{qty}**')
         st.write(f'- 중량: **{weight} kg**')
+        st.markdown('')
 
-        if st.button('Predict', key='predict'):
+        if st.button('예측하기', key='predict'):
             Xnew = pd.DataFrame([{
                 '파일어종': sel_file,
                 '산지_그룹화': sel_area,
@@ -145,9 +146,9 @@ def run_ml2():
                 # Designer card
                 st.markdown(f"""
                 <div style='background:linear-gradient(90deg,#fff,#f3f9ff);padding:18px;border-radius:12px;box-shadow:0 8px 24px rgba(15,15,15,0.06)'>
-                  <h2 style='margin:0 0 6px 0'>{sel_file} 예측 평균가</h2>
-                  <p style='font-size:28px;margin:4px 0'><b>{pred:,.0f} 원</b></p>
-                  <p style='color:gray;margin:0'>추정중앙값: {median:,.0f}원</p>
+                <h2 style='margin:0 0 6px 0'>{sel_file} 예측 평균가</h2>
+                <p style='font-size:28px;margin:4px 0'><b>{pred:,.0f} 원</b></p>
+                <p style='color:gray;margin:0'>추정중앙값: {median:,.0f}원</p>
                 </div>
                 """, unsafe_allow_html=True)
 

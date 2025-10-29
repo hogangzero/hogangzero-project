@@ -9,14 +9,25 @@ from app_ml2 import run_ml2
 
 def main():
 
-    menu = ['Home', 'price trend', 'ML', 'LLM']
+    menu = ['홈', '시세 알아보기', '시세 예측하기', '챗봇']
     sub_menu = ['어종별 경락가', '산지별 경락가']
-    ml_menu = ['시계열','피처별']
+    ml_menu = ['날짜별 예측하기','상세 예측하기']
 
 
-    st.sidebar.title("- 호갱제로 -")
+    st.sidebar.markdown("""
+    <div style='text-align: center; padding: 20px 0;'>
+        <h1 style='color: #667eea; margin: 0; font-size: 50px;'>호갱제로</h1>
+        <p style='color: #666; font-size: 16px; margin-top: 6px;'>
+            투명한 수산 시장을 위한 AI 기반 데이터 분석 솔루션
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+    
     st.sidebar.title("")    
     choice = st.sidebar.selectbox('메뉴', menu)
+    
     
 
     if choice == menu[0]:
@@ -31,7 +42,7 @@ def main():
             source_species()
         
     elif choice == menu[2]:
-        ml_choice = st.sidebar.selectbox('머신러닝 방법', ml_menu)
+        ml_choice = st.sidebar.selectbox('예측 방법', ml_menu)
         if ml_choice == ml_menu[0]:
             run_ml()
         elif ml_choice == ml_menu[1]:
