@@ -7,10 +7,11 @@ from app_source import source, source_species, source_price
 from app_llm import run_llm
 from app_ml2 import run_ml2
 
+
 def main():
 
-    menu = ['Home', 'price trend', 'ML', 'LLM']
-    sub_menu = ['어종별 경락가', '산지별 경락가']
+    menu = ['홈', '시세 알아보기', '시세 예측하기', '챗봇']
+    sub_menu = ['어종별 시세', '산지별 시세']
     ml_menu = ['시계열','피처별']
 
 
