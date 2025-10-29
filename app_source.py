@@ -7,7 +7,7 @@ from koreanize_matplotlib import koreanize
 
 
 def source_price():
-    st.header('🌊 산지별 시세 분석 대시보드')
+    st.header('[ 산지별 시세 분석 대시보드 ]')
     st.subheader('')
 
 # ============================================================
