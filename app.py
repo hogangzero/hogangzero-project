@@ -5,11 +5,13 @@ from app_ml import run_ml
 from app_species import species_price
 from app_source import source, source_species, source_price
 from app_llm import run_llm
+from app_ml2 import run_ml2
 
 def main():
 
     menu = ['Home', 'price trend', 'ML', 'LLM']
     sub_menu = ['어종별 경락가', '산지별 경락가']
+    ml_menu = ['시계열','피처별']
 
 
     st.sidebar.title("- 호갱제로 -")
@@ -29,7 +31,11 @@ def main():
             source_species()
         
     elif choice == menu[2]:
-        run_ml()
+        ml_choice = st.sidebar.selectbox('머신러닝 방법', ml_menu)
+        if ml_choice == ml_menu[0]:
+            run_ml()
+        elif ml_choice == ml_menu[1]:
+            run_ml2()
     elif choice == menu[3]:
         run_llm()
 

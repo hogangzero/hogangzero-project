@@ -26,9 +26,14 @@ def run_ml():
     데이터: 프로젝트의 `data/수산물_통합_전처리.csv` 파일을 사용합니다.
     컬럼: 'date' (YYYY-MM-DD), '공통어종' (어종 그룹), '평균가' (숫자, 쉼표 포함) 가 필요합니다.
     """
-    st.header('')
-    st.header('어종별 경락가 예측 대시보드')
-    st.header('')
+    # 간단한 스타일링: 가운데 정렬된 제목과 서브타이틀
+    st.markdown(
+        "<div style='text-align:center; padding:6px 0 0 0'>"
+        "<h1 style='margin:0'>어종별 경락가 예측 대시보드</h1>"
+        "<p style='color:gray; margin:0'>Prophet 모델을 이용한 월별 예측 및 주요월(분기) 요약</p>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
 
 
 
@@ -54,9 +59,17 @@ def run_ml():
     species_list = sorted(df['파일어종'].dropna().unique())
     species = st.sidebar.selectbox('어종 선택', species_list)
 
+    st.sidebar.header('모델 설정')
     years_to_forecast = st.sidebar.slider('예측 기간 (년)', min_value=1, max_value=10, value=3)
     retrain = st.sidebar.checkbox('모델 재학습 (강제)', value=False)
     months = years_to_forecast * 12
+
+    # 주요 월을 사용자가 선택할 수 있도록 함 (디자이너처럼 기본은 3,6,9,12)
+    months_to_show = st.sidebar.multiselect('주요 월 선택 (표시)', options=list(range(1, 13)), default=[3, 6, 9, 12])
+
+    # 모델 관련 정보와 도움말
+    st.sidebar.markdown('---')
+    st.sidebar.markdown('Tip: 주요 월을 선택하여 각 연도의 핵심 시점을 빠르게 확인하세요.')
 
     # 모델 디렉터리
     model_dir = os.path.join('.', 'models')
@@ -64,7 +77,8 @@ def run_ml():
     model_file = os.path.join(model_dir, f'model_{re.sub(r"[^0-9a-zA-Z가-힣_]","_", species)}.pkl')
 
     # 선택한 어종 데이터 월 단위 집계 (평균)
-    df_sp = df[df['공통어종'] == species].copy()
+    # 파일에서 사용자가 선택한 어종은 '파일어종' 컬럼에서 선택하므로 동일 컬럼으로 필터링합니다.
+    df_sp = df[df['파일어종'] == species].copy()
     if df_sp.empty:
         st.warning('선택한 어종에 대한 데이터가 없습니다.')
         return
@@ -111,25 +125,34 @@ def run_ml():
     forecast_monthly = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].copy()
     forecast_monthly['ds'] = pd.to_datetime(forecast_monthly['ds']).dt.to_period('M').dt.to_timestamp()
     
-    # 연도/월별 예측 결과를 텍스트로 표시
-    st.subheader("연도/월별 예측 가격")
+    # 연도/주요월(3,6,9,12)별 예측 결과를 텍스트로 표시
+    st.subheader("연도별 주요 월(3,6,9,12) 예측 가격")
     last_training_date = monthly['ds'].max()
     future_forecasts = forecast_monthly[forecast_monthly['ds'] > last_training_date]
-    
-    # 연도별로 그룹화
-    for year in future_forecasts['ds'].dt.year.unique():
+
+    # 디자이너 스타일: 연도별로 행을 만들고, 주요 월을 칼럼으로 정렬하여 metric 카드 형태로 표현
+    years = sorted(future_forecasts['ds'].dt.year.unique())
+    for year in years:
         year_data = future_forecasts[future_forecasts['ds'].dt.year == year]
+        if year_data.empty:
+            continue
         st.markdown(f"### {year}년")
-        
-        # 월별 예측값
-        for _, row in year_data.iterrows():
-            month = row['ds'].month
-            predicted_price = row['yhat']
-            lower_bound = row['yhat_lower']
-            upper_bound = row['yhat_upper']
-            
-            st.write(f"{species}의 {year}년 {month}월 예측 가격: {predicted_price:,.0f}원")
-            st.write(f"(신뢰구간: {lower_bound:,.0f}원 ~ {upper_bound:,.0f}원)")
+
+        cols = st.columns(len(months_to_show))
+        for col, m in zip(cols, months_to_show):
+            with col:
+                row = year_data[year_data['ds'].dt.month == m]
+                if row.empty:
+                    st.metric(label=f"{m}월", value="데이터 없음")
+                    st.caption('예측 범위에 없음')
+                    continue
+                r = row.iloc[0]
+                predicted_price = r['yhat']
+                lower_bound = r['yhat_lower']
+                upper_bound = r['yhat_upper']
+                # 메트릭 카드로 출력 (숫자 형식: 천단위 콤마)
+                st.metric(label=f"{m}월", value=f"{predicted_price:,.0f}원")
+                st.caption(f"신뢰구간: {lower_bound:,.0f}원 ~ {upper_bound:,.0f}원")
         st.markdown("---")
 
     # 테이블로도 전체 데이터 표시
@@ -141,6 +164,16 @@ def run_ml():
     forecast_monthly.to_csv(csv_buf, index=False)
     csv_bytes = csv_buf.getvalue().encode('utf-8')
     st.download_button(label='예측 결과 다운로드 (CSV)', data=csv_bytes, file_name=f'forecast_{species}.csv', mime='text/csv')
+
+    # 그래프 PNG로 다운로드 (디자이너용 보고서 첨부 가능)
+    try:
+        img_buf = io.BytesIO()
+        fig.savefig(img_buf, format='png', bbox_inches='tight')
+        img_buf.seek(0)
+        st.download_button(label='그래프 다운로드 (PNG)', data=img_buf, file_name=f'forecast_{species}.png', mime='image/png')
+    except Exception:
+        # fig가 없거나 저장 불가 시 무시
+        pass
 
     st.markdown('---')
     st.markdown('### 노트')
