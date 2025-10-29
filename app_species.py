@@ -298,6 +298,15 @@ def species_price():
     # ③ 해양데이터 연계 분석
     # -------------------------------------------------
     st.subheader("③ 해양데이터 (수온 · 기온 · 풍속) 연계 분석")
+    # 메인 설명 캡션 추가
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
+    <p style="margin: 0; font-size: 14px; opacity: 0.95;">
+    🌊 해양 환경 데이터(수온, 기온, 풍속)와 경매가의 상관관계를 분석하였습니다.
+    </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     col5, col6 = st.columns(2)
     with col5:
@@ -353,6 +362,7 @@ def species_price():
             st.warning("선택한 산지와 어종의 결합 데이터가 없습니다.")
         else:
             merged['연월'] = merged['year'].astype(str) + '-' + merged['month'].astype(str).str.zfill(2)
+            
             st.write(f"결합된 데이터 수: {len(merged)}")
             st.dataframe(merged, height=400)
 
@@ -371,11 +381,158 @@ def species_price():
             else:
                 plot_ocean_metrics(merged, ocean_vars, selected_market, selected_file_species)
 
-        if st.button("닫기", key="btn_close_section3"):
-            st.session_state.section3_show = False
-            st.experimental_rerun()
+        
 
             st.text('데이터 출처')
+            # ==================== 메트릭 카드 섹션 (맨 아래로 이동) ====================
+        st.markdown("---")
+        st.markdown("### 📊 주요 지표")
+        
+        # 계산
+        avg_price = merged['평균가'].mean()
+        max_price = merged['평균가'].max()
+        min_price = merged['평균가'].min()
+        avg_temp = merged['수온 평균'].mean()
+        
+        # 가격 변동성 계산
+        price_volatility = (merged['평균가'].std() / avg_price * 100)
+        
+        # 상관계수 계산
+        corr_temp = merged['평균가'].corr(merged['수온 평균'])
+        corr_air = merged['평균가'].corr(merged['기온 평균'])
+        corr_wind = merged['평균가'].corr(merged['풍속 평균'])
+        
+        # 4개 메트릭 카드
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric(
+                label="평균 경매가",
+                value=f"{avg_price:,.0f}원",
+                delta=f"변동성 {price_volatility:.1f}%"
+            )
+        
+        with col2:
+            st.metric(
+                label="가격 범위",
+                value=f"{max_price:,.0f}원",
+                delta=f"최저 {min_price:,.0f}원",
+                delta_color="off"
+            )
+        
+        with col3:
+            st.metric(
+                label="평균 수온",
+                value=f"{avg_temp:.1f}°C",
+                delta=f"상관계수 {corr_temp:.2f}"
+            )
+        
+        with col4:
+            # 가장 강한 상관관계 찾기
+            correlations = {
+                '수온': abs(corr_temp),
+                '기온': abs(corr_air),
+                '풍속': abs(corr_wind)
+            }
+            strongest = max(correlations, key=correlations.get)
+            strongest_val = correlations[strongest]
+            
+            st.metric(
+                label="주요 영향 요인",
+                value=strongest,
+                delta=f"상관도 {strongest_val:.2f}"
+            )
+        
+        # ==================== 인사이트 카드 섹션 ====================
+        st.markdown("### 💡 데이터 인사이트")
+        
+        col_i1, col_i2, col_i3 = st.columns(3)
+        
+        with col_i1:
+            # 수온 영향 분석
+            if corr_temp < -0.3:
+                temp_insight = "수온이 높을수록 가격이 <b>하락</b>하는 역상관 관계"
+                temp_emoji = "📉"
+            elif corr_temp > 0.3:
+                temp_insight = "수온이 높을수록 가격이 <b>상승</b>하는 양의 상관관계"
+                temp_emoji = "📈"
+            else:
+                temp_insight = "수온과 가격 간 <b>약한 상관관계</b>"
+                temp_emoji = "➡️"
+            
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        padding: 15px; border-radius: 10px; color: white; height: 150px;">
+                <h4>{temp_emoji} 수온 영향</h4>
+                <p style="font-size: 13px; line-height: 1.5;">
+                {temp_insight}
+                </p>
+                <p style="font-size: 12px; margin-top: 10px; opacity: 0.9;">
+                상관계수: {corr_temp:.3f}
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col_i2:
+            # 계절별 가격 패턴
+            merged['season'] = merged['month'].apply(
+                lambda x: '겨울' if x in [12, 1, 2] 
+                else '봄' if x in [3, 4, 5]
+                else '여름' if x in [6, 7, 8]
+                else '가을'
+            )
+            season_avg = merged.groupby('season')['평균가'].mean()
+            highest_season = season_avg.idxmax()
+            lowest_season = season_avg.idxmin()
+            season_diff = ((season_avg.max() - season_avg.min()) / season_avg.mean() * 100)
+            
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+                        padding: 15px; border-radius: 10px; color: white; height: 150px;">
+                <h4>🗓️ 계절별 패턴</h4>
+                <p style="font-size: 13px; line-height: 1.5;">
+                <b>{highest_season}</b>에 최고가<br/>
+                <b>{lowest_season}</b>에 최저가 기록
+                </p>
+                <p style="font-size: 12px; margin-top: 10px; opacity: 0.9;">
+                계절 간 가격차: {season_diff:.1f}%
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col_i3:
+            # 풍속 영향
+            if abs(corr_wind) > 0.3:
+                wind_impact = "높음"
+                wind_color = "#e74c3c"
+            elif abs(corr_wind) > 0.15:
+                wind_impact = "중간"
+                wind_color = "#f39c12"
+            else:
+                wind_impact = "낮음"
+                wind_color = "#2ecc71"
+            
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
+                        padding: 15px; border-radius: 10px; color: white; height: 150px;">
+                <h4>💨 풍속 영향도</h4>
+                <p style="font-size: 13px; line-height: 1.5;">
+                풍속의 가격 영향력:<br/>
+                <b style="color: {wind_color};">{wind_impact}</b>
+                </p>
+                <p style="font-size: 12px; margin-top: 10px; opacity: 0.9;">
+                상관계수: {corr_wind:.3f}<br/>
+                평균 풍속: {merged['풍속 평균'].mean():.1f}m/s
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    if st.button("닫기", key="btn_close_section3"):
+        st.session_state.section3_show = False
+        st.rerun()
+
+st.markdown("---")
+st.caption("📍 데이터 출처: 수산물유통정보시스템(FIPS) | 해양환경정보시스템")
 
 
 # ============================================================
