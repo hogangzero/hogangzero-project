@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+/csv_storage/
+*.chroma
+*.bin
+
 # Distribution / packaging
 .Python
 build/
