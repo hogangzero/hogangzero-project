@@ -4,10 +4,11 @@ from app_home import run_home
 from app_ml import run_ml
 from app_species import species_price
 from app_source import source, source_species, source_price
+from app_llm import run_llm
 
 def main():
 
-    menu = ['Home', 'price trend', 'ML', 'information']
+    menu = ['Home', 'price trend', 'ML', 'LLM']
     sub_menu = ['어종별 경락가', '산지별 경락가']
 
 
@@ -30,7 +31,7 @@ def main():
     elif choice == menu[2]:
         run_ml()
     elif choice == menu[3]:
-        pass
+        run_llm()
 
     
 if __name__ == '__main__':
