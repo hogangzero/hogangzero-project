@@ -6,8 +6,6 @@ from app_species import species_price
 from app_source import source, source_species, source_price
 
 def main():
-    st.title('호갱제로')
-
 
     menu = ['Home', 'price trend', 'ML', 'information']
     sub_menu = ['어종별 경락가', '산지별 경락가']
