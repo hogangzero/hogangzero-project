@@ -94,8 +94,15 @@ ex. 제주산 전복의 평균 경매가 // 특정 산지에서 품질이 좋은
 # ---------------------------------------------------
 def source():
     st.subheader("① 산지별 어종 평균 경락가")
-    st.caption("💡 선택한 산지에서 취급하는 어종들의 평균 경락가 입니다. " \
-    "어떤 어종의 가격이 높은지 한눈에 비교할 수 있습니다. ")
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
+    <p style="margin: 0; font-size: 14px; opacity: 0.95;">
+    📈 택한 산지에서 취급하는 어종들의 평균 경락가 입니다. 
+                어떤 어종의 가격이 높은지 한눈에 비교할 수 있습니다.
+    </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 
@@ -106,6 +113,8 @@ def source():
     산지_목록 = 산지_일반 + 산지_원양  #  일반 산지 + 원양 산지 순서로 결합
 
     선택_산지_1 = st.selectbox('산지를 선택하세요', 산지_목록)
+
+    
 
     # 선택한 산지 데이터 필터링
     filtered_df = df[df['산지'] == 선택_산지_1]
@@ -129,8 +138,15 @@ def source():
 
 def source_species():
     st.subheader("② 인기 어종 Top 10 산지별 시세")
-    st.caption("💡 시장에서 가장 활발하게 거래되는 어종 Top 10입니다. " \
-    "원하시는 어종과 산지를 선택하여 시세를 확인해보세요.")
+    # 메인 설명 캡션 추가
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
+    <p style="margin: 0; font-size: 14px; opacity: 0.95;">
+    🌊 시장에서 가장 활발하게 거래되는 어종 Top 10입니다. 원하시는 어종과 산지를 선택하여 시세를 확인해보세요.
+    </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     품종_목록 = sorted(df['어종'].unique())
 
