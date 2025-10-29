@@ -180,7 +180,7 @@ def species_price():
     # -------------------------------------------------
     # ① 어종별 일별 경락가 변동 추이
     # -------------------------------------------------
-    st.subheader("①  어종별 경락가 변동 ")
+    st.header("①  어종별 시세 ")
     # 설명 캡션 추가
     st.markdown("""
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
@@ -280,7 +280,6 @@ def species_price():
         st.markdown('---')
         
         # ==================== 인사이트 카드 섹션 ====================
-        st.markdown("### 데이터 인사이트")
         
         col_i1, col_i2, col_i3 = st.columns(3)
         
@@ -371,7 +370,7 @@ def species_price():
     # ② 파일어종 및 세부 어종별 낙찰가 비교
     # -------------------------------------------------
     st.markdown('---')
-    st.subheader("② 품종 및 상태별 경락가 ")
+    st.header("② 품종 및 상태별 시세 ")
     # 설명 캡션 추가
     st.markdown("""
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
@@ -507,7 +506,7 @@ def species_price():
             st.markdown('---')
             
             # ==================== 인사이트 카드 섹션 ====================
-            st.markdown("### 데이터 인사이트")
+
             
             col_i1, col_i2, col_i3 = st.columns(3)
             
@@ -780,22 +779,21 @@ def species_price():
         # ==================== 인사이트 카드 섹션 ====================
 
         st.markdown("---")
-        st.markdown("###  데이터 인사이트")
         
         col_i1, col_i2, col_i3 = st.columns(3)
         
-        with col_i1:
-            # 수온 영향 분석
-            if corr_temp < -0.3:
-                temp_insight = "수온이 높을수록 가격이 <b>하락</b>하는 역상관 관계"
-                temp_emoji = ""
+        with col_i1: 
+            # 수온 영향 분석 
+            if corr_temp < -0.3: 
+                temp_insight = "수온이 높을수록 가격이 <b>하락</b>하는 역상관 관계" 
+                temp_emoji = "" 
             elif corr_temp > 0.3:
-                temp_insight = "수온이 높을수록 가격이 <b>상승</b>하는 양의 상관관계"
+                temp_insight = "수온이 높을수록 가격이 <b>상승</b>하는 양의 상관관계" 
                 temp_emoji = ""
-            else:
-                temp_insight = "수온과 가격 간 <b>약한 상관관계</b>"
+            else: 
+                temp_insight = "수온과 가격 간 <b>약한 상관관계</b>" 
                 temp_emoji = ""
-            
+
             st.markdown(f"""
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                         padding: 15px; border-radius: 10px; color: white; height: 180px;">

@@ -56,20 +56,26 @@ def run_ml():
     df = df.dropna(subset=['date'])
     df['평균가'] = _clean_price_series(df['평균가'])
 
+    with st.sidebar:
+        st.divider()
+        st.sidebar.header('상세 검색하기')
+
+
     species_list = sorted(df['파일어종'].dropna().unique())
     species = st.sidebar.selectbox('어종 선택', species_list)
 
-    st.sidebar.header('모델 설정')
+    
+
     years_to_forecast = st.sidebar.slider('예측 기간 (년)', min_value=1, max_value=10, value=3)
     retrain = st.sidebar.checkbox('모델 재학습 (강제)', value=False)
     months = years_to_forecast * 12
 
-    # 주요 월을 사용자가 선택할 수 있도록 함 (디자이너처럼 기본은 3,6,9,12)
-    months_to_show = st.sidebar.multiselect('주요 월 선택 (표시)', options=list(range(1, 13)), default=[3, 6, 9, 12])
+    # 주요 달을 사용자가 선택할 수 있도록 함 (디자이너처럼 기본은 3,6,9,12)
+    months_to_show = st.sidebar.multiselect('달 선택', options=list(range(1, 13)), default=[3, 6, 9, 12])
 
     # 모델 관련 정보와 도움말
     st.sidebar.markdown('---')
-    st.sidebar.markdown('Tip: 주요 월을 선택하여 각 연도의 핵심 시점을 빠르게 확인하세요.')
+    st.sidebar.markdown('Tip:달을 선택하여 각 연도의 핵심 시점을 빠르게 확인하세요.')
 
     # 모델 디렉터리
     model_dir = os.path.join('.', 'models')
@@ -125,12 +131,12 @@ def run_ml():
     forecast_monthly = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].copy()
     forecast_monthly['ds'] = pd.to_datetime(forecast_monthly['ds']).dt.to_period('M').dt.to_timestamp()
     
-    # 연도/주요월(3,6,9,12)별 예측 결과를 텍스트로 표시
-    st.subheader("연도별 주요 월(3,6,9,12) 예측 가격")
+    # 연도/주요달(3,6,9,12)별 예측 결과를 텍스트로 표시
+    st.subheader("연도별 주요 달(3,6,9,12) 예측 가격")
     last_training_date = monthly['ds'].max()
     future_forecasts = forecast_monthly[forecast_monthly['ds'] > last_training_date]
 
-    # 디자이너 스타일: 연도별로 행을 만들고, 주요 월을 칼럼으로 정렬하여 metric 카드 형태로 표현
+    # 디자이너 스타일: 연도별로 행을 만들고, 주요 달을 칼럼으로 정렬하여 metric 카드 형태로 표현
     years = sorted(future_forecasts['ds'].dt.year.unique())
     for year in years:
         year_data = future_forecasts[future_forecasts['ds'].dt.year == year]

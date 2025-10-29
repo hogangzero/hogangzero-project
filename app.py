@@ -12,7 +12,7 @@ def main():
 
     menu = ['홈', '시세 알아보기', '시세 예측하기', '챗봇']
     sub_menu = ['어종별 시세', '산지별 시세']
-    ml_menu = ['시계열','피처별']
+    ml_menu = ['날짜별 예측','상세 검색 예측']
 
 
     st.sidebar.title("- 호갱제로 -")
@@ -32,7 +32,7 @@ def main():
             source_species()
         
     elif choice == menu[2]:
-        ml_choice = st.sidebar.selectbox('머신러닝 방법', ml_menu)
+        ml_choice = st.sidebar.selectbox('예측 방법', ml_menu)
         if ml_choice == ml_menu[0]:
             run_ml()
         elif ml_choice == ml_menu[1]:

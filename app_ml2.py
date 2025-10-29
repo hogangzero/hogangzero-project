@@ -82,16 +82,23 @@ def run_ml2():
     st.success(f'모델 {status} 완료')
 
     # Sidebar inputs
-    st.sidebar.header('입력값')
+    st.sidebar.header('')
+   
+    with st.sidebar:
+        st.divider()
+        st.sidebar.header("상세 카테고리")
+        st.divider()
+        
+
     files = sorted(df['파일어종'].dropna().unique())
     areas = sorted(df['산지_그룹화'].dropna().unique())
     sizes = sorted(df['규격_등급'].dropna().unique())
     packages = sorted(df['포장_분류'].dropna().unique())
 
     sel_file = st.sidebar.selectbox('어종', files, index=0)
-    sel_area = st.sidebar.selectbox('산지_그룹화', areas, index=0)
-    sel_size = st.sidebar.selectbox('규격_등급', sizes, index=0)
-    sel_pack = st.sidebar.selectbox('포장_분류', packages, index=0)
+    sel_area = st.sidebar.selectbox('산지', areas, index=0)
+    sel_size = st.sidebar.selectbox('규격 등급', sizes, index=0)
+    sel_pack = st.sidebar.selectbox('포장 상태', packages, index=0)
     qty = st.sidebar.number_input('수량', min_value=0.0, value=1.0, step=1.0)
     weight = st.sidebar.number_input('중량(kg)', min_value=0.0, value=1.0, step=0.1)
 
