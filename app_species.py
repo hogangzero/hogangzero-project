@@ -131,6 +131,7 @@ def plot_ocean_metrics(merged, ocean_vars, selected_market, selected_file_specie
     ax1.set_xticks(x_ticks[::step])
     ax1.set_xticklabels([labels[i] for i in range(0, len(labels), step)], rotation=45)
 
+
     # 해양데이터 (오른쪽 축)
     ax2 = ax1.twinx()
     colors = {'수온 평균': 'tab:red', '기온 평균': 'tab:orange', '풍속 평균': 'tab:green'}
@@ -163,9 +164,9 @@ def species_price():
       ② 어종 그룹별 낙찰가 비교
       ③ 해양데이터(수온, 기온, 풍속) 연계분석
     """
-    st.header('')
-    st.header('🐟 어종별 시세 분석 대시보드')
-    st.header('')
+
+    st.header('[ 어종별 시세 분석 대시보드 ]')
+    st.subheader('')
 
 
     # 1️⃣ CSV 데이터 로드 및 전처리
@@ -182,13 +183,14 @@ def species_price():
     st.subheader("①  어종별 경락가 변동 ")
     # 설명 캡션 추가
     st.markdown("""
-    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
-            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
-    <p style="margin: 0; font-size: 14px; opacity: 0.95;">
-    📈 어종별 경락가 추이를 파악합니다.
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            padding: 10px; border-radius: 10px; color: white; margin-bottom: 20px;">
+    <p style="margin: 0; font-size: 15px; opacity: 0.95;">
+    💡 어종별 경락가 추이를 파악합니다.
     </p>
     </div>
     """, unsafe_allow_html=True)
+    st.markdown('---')
 
     species = st.selectbox(" 어종을 선택하세요 ", sorted(df['파일어종'].unique()))
 
@@ -212,13 +214,14 @@ def species_price():
             # 인덱스 리셋 후 표시
             display_df = display_df.reset_index(drop=True)
             st.dataframe(display_df)
+            st.markdown('---')
             selected_metrics = st.multiselect(
                 "가격 항목을 선택하세요 ~", ['평균가', '낙찰고가', '낙찰저가'], default=['평균가'])
             plot_metrics(result, selected_metrics, f"{species} 가격 추이")
             # ==================== 메트릭 카드 섹션 ====================
         st.markdown("---")
-        st.markdown("### 📊 주요 지표")
         
+
         # 계산
         avg_price = result['평균가'].mean()
         max_price = result['낙찰고가'].max()
@@ -273,9 +276,11 @@ def species_price():
                 value=f"{price_range:,.0f}원",
                 delta=f"변동률 {price_volatility:.1f}%"
             )
+
+        st.markdown('---')
         
         # ==================== 인사이트 카드 섹션 ====================
-        st.markdown("### 💡 데이터 인사이트")
+        st.markdown("### 데이터 인사이트")
         
         col_i1, col_i2, col_i3 = st.columns(3)
         
@@ -283,35 +288,35 @@ def species_price():
             # 가격 트렌드 분석
             if trend_change > 5:
                 trend_text = "강한 상승세"
-                trend_emoji = "🚀"
+                trend_emoji = ""
                 trend_desc = "가격이 지속적으로 상승 중입니다"
                 trend_color = "#e74c3c"
             elif trend_change > 2:
                 trend_text = "완만한 상승"
-                trend_emoji = "📈"
+                trend_emoji = ""
                 trend_desc = "가격이 소폭 상승하고 있습니다"
                 trend_color = "#e67e22"
             elif trend_change < -5:
                 trend_text = "급격한 하락"
-                trend_emoji = "📉"
+                trend_emoji = ""
                 trend_desc = "가격이 빠르게 하락하고 있습니다"
                 trend_color = "#2ecc71"
             elif trend_change < -2:
                 trend_text = "완만한 하락"
-                trend_emoji = "📊"
+                trend_emoji = ""
                 trend_desc = "가격이 소폭 하락하고 있습니다"
                 trend_color = "#27ae60"
             else:
                 trend_text = "안정 유지"
-                trend_emoji = "➡️"
+                trend_emoji = ""
                 trend_desc = "가격이 안정적으로 유지되고 있습니다"
                 trend_color = "#3498db"
             
             st.markdown(f"""
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                        padding: 15px; border-radius: 10px; color: white; height: 150px;">
+                        padding: 10px; border-radius: 10px; color: white; height: 180px;">
                 <h4>{trend_emoji} 가격 추세</h4>
-                <p style="font-size: 13px; line-height: 1.5;">
+                <p style="font-size: 12px; line-height: 1.5;">
                 <b style="color: {trend_color};">{trend_text}</b><br/>
                 {trend_desc}
                 </p>
@@ -327,61 +332,58 @@ def species_price():
             if price_volatility > 25:
                 volatility_level = "매우 높음"
                 volatility_desc = "가격 예측이 어려운 고위험 구간"
-                vol_emoji = "⚠️"
+                vol_emoji = ""
                 vol_color = "#e74c3c"
             elif price_volatility > 15:
                 volatility_level = "높음"
                 volatility_desc = "변동이 크므로 거래 타이밍 중요"
-                vol_emoji = "📊"
+                vol_emoji = ""
                 vol_color = "#f39c12"
             elif price_volatility > 8:
                 volatility_level = "보통"
                 volatility_desc = "적정 수준의 가격 변동"
-                vol_emoji = "📈"
+                vol_emoji = ""
                 vol_color = "#3498db"
             else:
                 volatility_level = "낮음"
                 volatility_desc = "안정적인 가격 형성"
-                vol_emoji = "✅"
+                vol_emoji = ""
                 vol_color = "#2ecc71"
             
             st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
-                        padding: 15px; border-radius: 10px; color: white; height: 150px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        padding: 10px; border-radius: 10px; color: white; height: 180px;">
                 <h4>{vol_emoji} 가격 변동성</h4>
-                <p style="font-size: 13px; line-height: 1.5;">
+                <p style="font-size: 12px; line-height: 1.5;">
                 변동성: <b style="color: {vol_color};">{volatility_level}</b><br/>
                 {volatility_desc}
                 </p>
-                <p style="font-size: 12px; margin-top: 10px; opacity: 0.9;">
+                <p style="font-size: 12px; margin-top: 1px; opacity: 1.5;">
                 변동계수: {price_volatility:.1f}%<br/>
                 가격 범위: {price_range:,.0f}원
                 </p>
             </div>
             """, unsafe_allow_html=True)
-    else:
-        st.warning("해당 어종 데이터가 100개 이하입니다.")
-
-        if st.button("닫기", key="btn_close_section1"):
-            st.session_state.section1_show = False
-            st.experimental_rerun()
-
-    st.markdown("---")
+            
+           
 
     # -------------------------------------------------
     # ② 파일어종 및 세부 어종별 낙찰가 비교
     # -------------------------------------------------
+    st.markdown('---')
     st.subheader("② 품종 및 상태별 경락가 ")
     # 설명 캡션 추가
     st.markdown("""
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
+            padding: 10px; border-radius: 10px; color: white; margin-bottom: 20px;">
     <p style="margin: 0; font-size: 14px; opacity: 0.95;">
-    🐟 품종별, 상태별(냉동/선어 등) 경락가를 비교하여 최적의 거래 시기를 파악합니다.
+    💡 품종별, 상태별(냉동/선어 등) 경락가를 비교하여 최적의 거래 시기를 파악합니다.
     </p>
     </div>
     """, unsafe_allow_html=True)
 
+    st.markdown("---")
+    
     file_species = st.selectbox(
         "어종을 선택하세요 .", sorted(df.groupby('파일어종').size()[lambda x: x > 100].index))
     
@@ -452,7 +454,7 @@ def species_price():
                 plot_metrics(result, ['평균가', '낙찰고가', '낙찰저가'], f"{species} 낙찰가 시계열")
                             # ==================== 메트릭 카드 섹션 ====================
             st.markdown("---")
-            st.markdown("### 📊 주요 지표")
+            st.markdown("## 주요 지표")
             
             # 계산
             avg_price = result['평균가'].mean()
@@ -501,9 +503,11 @@ def species_price():
                     value=f"{price_volatility:.1f}%",
                     delta=f"범위 {price_range:,.0f}원"
                 )
+
+            st.markdown('---')
             
             # ==================== 인사이트 카드 섹션 ====================
-            st.markdown("### 💡 데이터 인사이트")
+            st.markdown("### 데이터 인사이트")
             
             col_i1, col_i2, col_i3 = st.columns(3)
             
@@ -511,22 +515,24 @@ def species_price():
                 # 가격 트렌드 분석
                 if trend_change > 5:
                     trend_text = "상승 추세"
-                    trend_emoji = "📈"
+                    trend_emoji = ""
                     trend_color = "#e74c3c"
                 elif trend_change < -5:
                     trend_text = "하락 추세"
-                    trend_emoji = "📉"
+                    trend_emoji = ""
                     trend_color = "#2ecc71"
                 else:
                     trend_text = "안정 추세"
-                    trend_emoji = "➡️"
+                    trend_emoji = ""
                     trend_color = "#3498db"
+                
+
                 
                 st.markdown(f"""
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                            padding: 15px; border-radius: 10px; color: white; height: 150px;">
+                            padding: 9px; border-radius: 10px; color: white; height: 180px;">
                     <h4>{trend_emoji} 최근 가격 동향</h4>
-                    <p style="font-size: 13px; line-height: 1.5;">
+                    <p style="font-size: 12px; line-height: 1.5;">
                     최근 30일 평균가가<br/>
                     전체 평균 대비 <b>{abs(trend_change):.1f}%</b><br/>
                     <b style="color: {trend_color};">{trend_text}</b>
@@ -553,10 +559,10 @@ def species_price():
                     vol_color = "#2ecc71"
                 
                 st.markdown(f"""
-                <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
-                            padding: 15px; border-radius: 10px; color: white; height: 150px;">
-                    <h4>📊 가격 변동성</h4>
-                    <p style="font-size: 13px; line-height: 1.5;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                            padding: 9px; border-radius: 10px; color: white; height: 180px;">
+                    <h4> 가격 변동성</h4>
+                    <p style="font-size: 12px; line-height: 1.5;">
                     변동성: <b style="color: {vol_color};">{volatility_level}</b><br/>
                     {volatility_desc}
                     </p>
@@ -577,9 +583,9 @@ def species_price():
                     price_diff = ((monthly_avg.max() - monthly_avg.min()) / monthly_avg.mean() * 100)
                     
                     st.markdown(f"""
-                    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);  
                                 padding: 15px; border-radius: 10px; color: white; height: 150px;">
-                        <h4>📅 최적 거래 시기</h4>
+                        <h4> 최적 거래 시기</h4>
                         <p style="font-size: 13px; line-height: 1.5;">
                         <b>{best_month}월</b>에 가장 저렴<br/>
                         <b>{worst_month}월</b>에 가장 비쌈
@@ -591,10 +597,10 @@ def species_price():
                     """, unsafe_allow_html=True)
                 else:
                     st.markdown("""
-                    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
-                                padding: 15px; border-radius: 10px; color: white; height: 150px;">
-                        <h4>📅 거래 정보</h4>
-                        <p style="font-size: 13px; line-height: 1.5;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);  
+                                padding: 10px; border-radius: 10px; color: white; height: 180px;">
+                        <h4> 거래 정보</h4>
+                        <p style="font-size: 15px; line-height: 1.8;">
                         선택한 품종과 상태의<br/>
                         데이터를 분석 중입니다.
                         </p>
@@ -604,9 +610,10 @@ def species_price():
                 
         else:
             st.warning("데이터가 부족합니다.")
+            
         if st.button("닫기", key="btn_close_section2"):
-            st.session_state.section2_show = False
-            st.experimental_rerun()
+           st.session_state.section2_show = False
+           st.experimental_rerun()
 
     st.markdown("---")
 
@@ -616,13 +623,14 @@ def species_price():
     st.subheader("③ 해양데이터 (수온 · 기온 · 풍속) 연계 분석")
     # 메인 설명 캡션 추가
     st.markdown("""
-    <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
-            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
+     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            padding: 10px; border-radius: 10px; color: white; margin-bottom: 20px;">
     <p style="margin: 0; font-size: 14px; opacity: 0.95;">
-    🌊 해양 환경 데이터(수온, 기온, 풍속)와 경매가의 상관관계를 분석하였습니다.
+    💡 해양 환경 데이터(수온, 기온, 풍속)와 경매가의 상관관계를 분석하였습니다.
     </p>
     </div>
     """, unsafe_allow_html=True)
+    st.markdown('---')
 
     col5, col6 = st.columns(2)
     with col5:
@@ -645,6 +653,9 @@ def species_price():
 
         market_list = sorted(ocean_df['산지'].unique())
         # compact: market selectbox + section reset next to it, then species selectbox
+        
+    
+
         col_m, col_m_reset, col_s = st.columns([2.5, 0.8, 2.5])
         with col_m:
             selected_market = st.selectbox(
@@ -670,20 +681,30 @@ def species_price():
             .reset_index()
         )
 
+
         ocean_cols = ['기온 평균', '수온 평균', '풍속 평균']
         ocean_selected = ocean_df[ocean_df['산지'] == selected_market][['year', 'month'] + ocean_cols]
         merged = pd.merge(species_monthly, ocean_selected, on=['year', 'month'], how='inner')
+
+        
 
         if merged.empty:
             st.warning("선택한 산지와 어종의 결합 데이터가 없습니다.")
         else:
             merged['연월'] = merged['year'].astype(str) + '-' + merged['month'].astype(str).str.zfill(2)
             
+
+
             st.write(f"결합된 데이터 수: {len(merged)}")
             st.dataframe(merged, height=400)
 
+            st.markdown('---')
+
             # compact ocean variable selector
             col_vars, col_vars_spacer = st.columns([2.5, 1])
+
+           
+
             with col_vars:
                 ocean_vars = st.multiselect(
                     "해양 변수",
@@ -698,12 +719,9 @@ def species_price():
                 plot_ocean_metrics(merged, ocean_vars, selected_market, selected_file_species)
 
         
-
-            st.text('데이터 출처')
             # ==================== 메트릭 카드 섹션 (맨 아래로 이동) ====================
         st.markdown("---")
-        st.markdown("### 📊 주요 지표")
-        
+       
         # 계산
         avg_price = merged['평균가'].mean()
         max_price = merged['평균가'].max()
@@ -760,7 +778,9 @@ def species_price():
             )
         
         # ==================== 인사이트 카드 섹션 ====================
-        st.markdown("### 💡 데이터 인사이트")
+
+        st.markdown("---")
+        st.markdown("###  데이터 인사이트")
         
         col_i1, col_i2, col_i3 = st.columns(3)
         
@@ -768,17 +788,17 @@ def species_price():
             # 수온 영향 분석
             if corr_temp < -0.3:
                 temp_insight = "수온이 높을수록 가격이 <b>하락</b>하는 역상관 관계"
-                temp_emoji = "📉"
+                temp_emoji = ""
             elif corr_temp > 0.3:
                 temp_insight = "수온이 높을수록 가격이 <b>상승</b>하는 양의 상관관계"
-                temp_emoji = "📈"
+                temp_emoji = ""
             else:
                 temp_insight = "수온과 가격 간 <b>약한 상관관계</b>"
-                temp_emoji = "➡️"
+                temp_emoji = ""
             
             st.markdown(f"""
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                        padding: 15px; border-radius: 10px; color: white; height: 150px;">
+                        padding: 15px; border-radius: 10px; color: white; height: 180px;">
                 <h4>{temp_emoji} 수온 영향</h4>
                 <p style="font-size: 13px; line-height: 1.5;">
                 {temp_insight}
@@ -794,18 +814,20 @@ def species_price():
             merged['season'] = merged['month'].apply(
                 lambda x: '겨울' if x in [12, 1, 2] 
                 else '봄' if x in [3, 4, 5]
+                    
                 else '여름' if x in [6, 7, 8]
                 else '가을'
             )
+       
             season_avg = merged.groupby('season')['평균가'].mean()
             highest_season = season_avg.idxmax()
             lowest_season = season_avg.idxmin()
             season_diff = ((season_avg.max() - season_avg.min()) / season_avg.mean() * 100)
             
             st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
-                        padding: 15px; border-radius: 10px; color: white; height: 150px;">
-                <h4>🗓️ 계절별 패턴</h4>
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        padding: 15px; border-radius: 10px; color: white; height: 180px;">
+                <h4> 계절별 패턴</h4>
                 <p style="font-size: 13px; line-height: 1.5;">
                 <b>{highest_season}</b>에 최고가<br/>
                 <b>{lowest_season}</b>에 최저가 기록
@@ -815,6 +837,8 @@ def species_price():
                 </p>
             </div>
             """, unsafe_allow_html=True)
+
+            
         
         with col_i3:
             # 풍속 영향
@@ -829,10 +853,10 @@ def species_price():
                 wind_color = "#2ecc71"
             
             st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
-                        padding: 15px; border-radius: 10px; color: white; height: 150px;">
-                <h4>💨 풍속 영향도</h4>
-                <p style="font-size: 13px; line-height: 1.5;">
+             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        padding: 15px; border-radius: 10px; color: white; height: 180px;">
+                <h4> 풍속 영향도</h4>
+                <p style="font-size: 13px; line-height: 1;">
                 풍속의 가격 영향력:<br/>
                 <b style="color: {wind_color};">{wind_impact}</b>
                 </p>
@@ -843,10 +867,7 @@ def species_price():
             </div>
             """, unsafe_allow_html=True)
 
-    if st.button("닫기", key="btn_close_section3"):
-        st.session_state.section3_show = False
-        st.rerun()
-
+   
 st.markdown("---")
 st.caption("📍 데이터 출처: 수산물유통정보시스템(FIPS) | 해양환경정보시스템")
 

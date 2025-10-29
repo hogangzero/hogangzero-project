@@ -7,7 +7,8 @@ from koreanize_matplotlib import koreanize
 
 
 def source_price():
-    st.header('🌊 산지별 시세 분석 대시보드')
+    st.header('[ 산지별 시세 분석 대시보드 ]')
+    st.subheader('')
 
 # ============================================================
 # 전역 설정(Global Settings)
@@ -95,15 +96,16 @@ ex. 제주산 전복의 평균 경매가 // 특정 산지에서 품질이 좋은
 def source():
     st.subheader("① 산지별 어종 평균 경락가")
     st.markdown("""
-    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+    <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
             padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
-    <p style="margin: 0; font-size: 14px; opacity: 0.95;">
-    📈 택한 산지에서 취급하는 어종들의 평균 경락가 입니다. 
+    <p style="margin: 0; font-size: 15px; opacity: 0.95;">
+    택한 산지에서 취급하는 어종들의 평균 경락가 입니다. 
                 어떤 어종의 가격이 높은지 한눈에 비교할 수 있습니다.
     </p>
     </div>
     """, unsafe_allow_html=True)
 
+    st.markdown('---')
 
 
     # 셀렉트박스 - (원양) 포함 산지를 맨 밑으로
@@ -114,22 +116,25 @@ def source():
 
     선택_산지_1 = st.selectbox('산지를 선택하세요', 산지_목록)
 
-    
-
-    # 선택한 산지 데이터 필터링
-    filtered_df = df[df['산지'] == 선택_산지_1]
 
     # 시각화 
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.bar(filtered_df['파일어종'], filtered_df['평균가'])
-    ax.set_xlabel('어종')
-    ax.set_ylabel('평균 경락가')
-    ax.set_title(f'{선택_산지_1} 산지 어종별 평균 경락가', fontsize=14)
-    plt.xticks(rotation=45, ha='right')
-    plt.tight_layout()
-    st.pyplot(fig)
+    if 선택_산지_1:
+            filtered_df = df[df['산지'] == 선택_산지_1]
 
-    st.markdown("---")
+            if not filtered_df.empty:
+                fig, ax = plt.subplots(figsize=(10, 6))
+                ax.bar(filtered_df['파일어종'], filtered_df['평균가'])
+                ax.set_xlabel('어종')
+                ax.set_ylabel('평균 경락가')
+                ax.set_title(f'{선택_산지_1} 산지 어종별 평균 경락가', fontsize=14)
+                plt.xticks(rotation=45, ha='right')
+                plt.tight_layout()
+                st.pyplot(fig)
+            else:
+                st.info("선택한 산지에 해당하는 데이터가 없습니다.")
+
+    st.markdown('---')
+            
 
     
 # ---------------------------------------------------
@@ -141,15 +146,17 @@ def source_species():
     # 메인 설명 캡션 추가
     st.markdown("""
     <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
-            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
-    <p style="margin: 0; font-size: 14px; opacity: 0.95;">
-    🌊 시장에서 가장 활발하게 거래되는 어종 Top 10입니다. 원하시는 어종과 산지를 선택하여 시세를 확인해보세요.
+            padding: 12px; border-radius: 10px; color: white; margin-bottom: 20px;">
+    <p style="margin: 0; font-size: 15px; opacity: 0.95;">
+    시장에서 가장 활발하게 거래되는 어종입니다. 
+    원하시는 어종과 산지를 선택하여 시세를 확인해보세요.
     </p>
     </div>
     """, unsafe_allow_html=True)
 
     품종_목록 = sorted(df['어종'].unique())
 
+    st.markdown('---')
 
     #  거래량 계산 (데이터 개수 또는 평균가 합계로 판단)
     #  데이터 개수 기준
@@ -177,7 +184,7 @@ def source_species():
         산지_목록_2 = 산지_일반_2 + 산지_원양_2
     
         선택_산지_2 = st.selectbox(
-            f'산지를 선택하세요 ({선택_품종} 거래량 상위 5개)', 
+            f'산지를 선택하세요 , {선택_품종} 거래량 상위 5개 ', 
             산지_목록_2, 
             key='산지2'
         )
@@ -213,16 +220,7 @@ def source_species():
         st.pyplot(fig)
         plt.close()
 
-        # 인사이트 캡션
-        st.caption(f"""
-        📊 **시세 분석 인사이트**  
-        • 총 거래 건수: **{len(filtered_df_2):,}건**  
-        • 연평균 경락가: **{평균가격:,.0f}원**  
-        • 최고가 시기: **{int(최고가_월)}월 ({최고가:,.0f}원)**  
-        • 최저가 시기: **{int(최저가_월)}월 ({최저가:,.0f}원)**  
-        • 가격 변동폭: **{가격차이:,.0f}원 ({변동률:.1f}%)**  
-        """)
-
+        st.markdown('---')
 
         # 추가 메트릭 카드
         col_a, col_b, col_c = st.columns(3)
