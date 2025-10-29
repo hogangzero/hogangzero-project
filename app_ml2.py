@@ -102,7 +102,7 @@ def run_ml2():
     with left:
         st.subheader('설정 목록')
         st.write(f'- 어종: **{sel_file}**')
-        st.write(f'- 산지 그룹: **{sel_area}**')
+        st.write(f'- 원산지: **{sel_area}**')
         st.write(f'- 규격 등급: **{sel_size}**')
         st.write(f'- 포장: **{sel_pack}**')
         st.write(f'- 수량: **{qty}**')
