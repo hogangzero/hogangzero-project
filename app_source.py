@@ -99,8 +99,7 @@ def source():
     <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
             padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
     <p style="margin: 0; font-size: 15px; opacity: 0.95;">
-    택한 산지에서 취급하는 어종들의 평균 경락가 입니다. 
-                어떤 어종의 가격이 높은지 한눈에 비교할 수 있습니다.
+    💡 택하신 산지에서 취급하는 어종들의 평균 경락가를 확인해 보세요!
     </p>
     </div>
     """, unsafe_allow_html=True)
@@ -146,10 +145,9 @@ def source_species():
     # 메인 설명 캡션 추가
     st.markdown("""
     <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
-            padding: 12px; border-radius: 10px; color: white; margin-bottom: 20px;">
-    <p style="margin: 0; font-size: 15px; opacity: 0.95;">
-    시장에서 가장 활발하게 거래되는 어종입니다. 
-    원하시는 어종과 산지를 선택하여 시세를 확인해보세요.
+            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
+    <p style="margin: 0; font-size: 15px; opacity: 0.95;"> 
+    💡 원하시는 [어종]과 [산지]를 선택하여 시세를 확인해 보세요!
     </p>
     </div>
     """, unsafe_allow_html=True)
