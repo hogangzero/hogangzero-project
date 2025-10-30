@@ -137,7 +137,7 @@ def plot_ocean_metrics(merged, ocean_vars, selected_market, selected_file_specie
     colors = {'수온 평균': 'tab:red', '기온 평균': 'tab:orange', '풍속 평균': 'tab:green'}
     for v in ocean_vars:
         ax2.plot(x_ticks, merged[v], marker='s', linestyle='--', linewidth=2,
-                 color=colors.get(v, 'gray'), label=v)
+                color=colors.get(v, 'gray'), label=v)
     ax2.set_ylabel('해양 데이터 지표')
     ax2.tick_params(axis='y')
 
@@ -160,9 +160,9 @@ def species_price():
     Streamlit 기반 어종별 가격 분석 대시보드 메인 함수
     -------------------------------------------------------
     3개의 주요 섹션으로 구성:
-      ① 어종별 일별 경락가 추이
-      ② 어종 그룹별 낙찰가 비교
-      ③ 해양데이터(수온, 기온, 풍속) 연계분석
+    ① 어종별 일별 경락가 추이
+    ② 어종 그룹별 낙찰가 비교
+    ③ 해양데이터(수온, 기온, 풍속) 연계분석
     """
 
     st.header('[ 어종별 시세 분석 대시보드 ]')
@@ -183,10 +183,10 @@ def species_price():
     st.header("①  어종별 시세 ")
     # 설명 캡션 추가
     st.markdown("""
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            padding: 10px; border-radius: 10px; color: white; margin-bottom: 20px;">
-    <p style="margin: 0; font-size: 15px; opacity: 0.95;">
-    💡 어종별 경락가 추이를 파악합니다.
+    <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
+    <p style="margin: 0; font-size: 15px; opacity: 0.95;"> 
+    💡 어종별 시세를 한눈에 알아보세요.
     </p>
     </div>
     """, unsafe_allow_html=True)
@@ -312,8 +312,9 @@ def species_price():
                 trend_color = "#3498db"
             
             st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                        padding: 10px; border-radius: 10px; color: white; height: 180px;">
+            <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
+            <p style="margin: 0; font-size: 15px; opacity: 0.95;"> 
                 <h4>{trend_emoji} 가격 추세</h4>
                 <p style="font-size: 12px; line-height: 1.5;">
                 <b style="color: {trend_color};">{trend_text}</b><br/>
@@ -364,7 +365,6 @@ def species_price():
             </div>
             """, unsafe_allow_html=True)
             
-           
 
     # -------------------------------------------------
     # ② 파일어종 및 세부 어종별 낙찰가 비교
@@ -373,10 +373,10 @@ def species_price():
     st.header("② 품종 및 상태별 시세 ")
     # 설명 캡션 추가
     st.markdown("""
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            padding: 10px; border-radius: 10px; color: white; margin-bottom: 20px;">
-    <p style="margin: 0; font-size: 14px; opacity: 0.95;">
-    💡 품종별, 상태별(냉동/선어 등) 경락가를 비교하여 최적의 거래 시기를 파악합니다.
+    <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
+    <p style="margin: 0; font-size: 15px; opacity: 0.95;"> 
+    💡 품종별, 상태별 시세를 비교하여 최적의 거래 시기를 파악해보세요.
     </p>
     </div>
     """, unsafe_allow_html=True)
@@ -413,32 +413,49 @@ def species_price():
         
         # 순수 품종 목록 (상태 제외)
         pure_species_list = sorted(species_info.keys())
-        
+
+
+                    # 상태명 매핑 (줄임말 → 풀네임)
+        state_fullname_map = { "활": "활어", "냉": "냉동", "선": "선어(냉장)" }
+        # 역매핑 (풀네임 → 줄임말)
+        state_shortname_map = {v: k for k, v in state_fullname_map.items()}
+
+        # 품종 및 상태 선택 섹션
+
         if pure_species_list:
-            # compact 품종 + 상태 layout: 품종 selectbox (narrow) + 상태 radio
+            st.markdown('품종을 선택해주세요')
             col_species, col_state = st.columns([2.5, 1.5])
+
             with col_species:
                 selected_pure_species = st.selectbox(
-                    "품종 선택",
-                    pure_species_list,
-                    key="pure_species_select",
-                    label_visibility="collapsed",
+                    "품종 선택", pure_species_list,
+                    key="pure_species_select", label_visibility="collapsed"
                 )
-            # 해당 품종의 가능한 상태 표시
-            available_states = sorted(species_info[selected_pure_species])
-            # 상태가 1개인 경우 바로 선택, 2개 이상인 경우만 라디오 버튼 표시
-            if len(available_states) == 1:
-                selected_state = available_states[0]
-                st.info(f"이 품종은 '{selected_state}' 상태의 데이터만 있습니다.")
-            else: 
-                selected_state = st.radio( "상태를 선택하세요", available_states, horizontal=True, key="radio_state_section2")
-
             
-            # 선택된 품종과 상태로 완성된 이름 생성
+            available_states = sorted(species_info[selected_pure_species])
+            
+            # 줄임말 → 풀네임으로 변환하여 라디오 버튼이나 메시지에 표시
+            available_states_full = [state_fullname_map.get(s, s) for s in available_states]
+
+            if len(available_states) == 1:
+                selected_state_full = available_states_full[0]
+                st.info(f"이 품종은 '{selected_state_full}' 상태의 데이터만 있습니다.")
+            else:
+                selected_state_full = st.radio(
+                    "상태를 선택하세요", available_states_full,
+                    horizontal=True, key="radio_state_section2"
+                )
+
+            # 풀네임으로부터 다시 줄임말 상태 코드 구함
+            selected_state = state_shortname_map.get(selected_state_full, selected_state_full)
+
+            # 완성된 어종명 생성 (기존 포맷 유지)
             species = f"({selected_state}){selected_pure_species}"
+
         else:
             st.warning("분류 가능한 품종이 없습니다.")
             st.stop()
+
                 
         if species:
             result = filter_by_species(subset, '어종', species)
@@ -453,7 +470,6 @@ def species_price():
                 plot_metrics(result, ['평균가', '낙찰고가', '낙찰저가'], f"{species} 낙찰가 시계열")
                             # ==================== 메트릭 카드 섹션 ====================
             st.markdown("---")
-            st.markdown("## 주요 지표")
             
             # 계산
             avg_price = result['평균가'].mean()
@@ -506,7 +522,6 @@ def species_price():
             st.markdown('---')
             
             # ==================== 인사이트 카드 섹션 ====================
-
             
             col_i1, col_i2, col_i3 = st.columns(3)
             
@@ -610,9 +625,6 @@ def species_price():
         else:
             st.warning("데이터가 부족합니다.")
             
-        if st.button("닫기", key="btn_close_section2"):
-           st.session_state.section2_show = False
-           st.experimental_rerun()
 
     st.markdown("---")
 
@@ -622,10 +634,10 @@ def species_price():
     st.subheader("③ 해양데이터 (수온 · 기온 · 풍속) 연계 분석")
     # 메인 설명 캡션 추가
     st.markdown("""
-     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            padding: 10px; border-radius: 10px; color: white; margin-bottom: 20px;">
-    <p style="margin: 0; font-size: 14px; opacity: 0.95;">
-    💡 해양 환경 데이터(수온, 기온, 풍속)와 경매가의 상관관계를 분석하였습니다.
+    <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
+    <p style="margin: 0; font-size: 15px; opacity: 0.95;"> 
+    💡 해양 환경 데이터(수온, 기온, 풍속)와 시세의 상관관계를 알아보세요.
     </p>
     </div>
     """, unsafe_allow_html=True)
@@ -657,6 +669,7 @@ def species_price():
 
         col_m, col_m_reset, col_s = st.columns([2.5, 0.8, 2.5])
         with col_m:
+            st.markdown("산지를 선택하세요")
             selected_market = st.selectbox(
                 "산지 선택",
                 market_list,
@@ -665,6 +678,7 @@ def species_price():
             )
         
         with col_s:
+            st.markdown("어종을 선택하세요.")
             selected_file_species = st.selectbox(
                 "어종(파일어종) 선택",
                 sorted(df['파일어종'].unique()),
@@ -702,7 +716,7 @@ def species_price():
             # compact ocean variable selector
             col_vars, col_vars_spacer = st.columns([2.5, 1])
 
-           
+
 
             with col_vars:
                 ocean_vars = st.multiselect(
@@ -816,7 +830,7 @@ def species_price():
                 else '여름' if x in [6, 7, 8]
                 else '가을'
             )
-       
+
             season_avg = merged.groupby('season')['평균가'].mean()
             highest_season = season_avg.idxmax()
             lowest_season = season_avg.idxmin()
@@ -825,7 +839,7 @@ def species_price():
             st.markdown(f"""
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                         padding: 15px; border-radius: 10px; color: white; height: 180px;">
-                <h4> 계절별 패턴</h4>
+                <h4> 계절별 시세</h4>
                 <p style="font-size: 13px; line-height: 1.5;">
                 <b>{highest_season}</b>에 최고가<br/>
                 <b>{lowest_season}</b>에 최저가 기록
@@ -851,7 +865,7 @@ def species_price():
                 wind_color = "#2ecc71"
             
             st.markdown(f"""
-             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                         padding: 15px; border-radius: 10px; color: white; height: 180px;">
                 <h4> 풍속 영향도</h4>
                 <p style="font-size: 13px; line-height: 1;">
@@ -865,7 +879,6 @@ def species_price():
             </div>
             """, unsafe_allow_html=True)
 
-   
 st.markdown("---")
 st.caption("📍 데이터 출처: 수산물유통정보시스템(FIPS) | 해양환경정보시스템")
 

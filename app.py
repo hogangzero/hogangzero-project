@@ -13,11 +13,25 @@ def main():
     menu = ['홈', '시세 알아보기', '시세 예측하기', '챗봇']
     sub_menu = ['어종별 시세', '산지별 시세']
     ml_menu = ['날짜별 예측','상세 검색 예측']
+    menu = ['홈', '시세 알아보기', '시세 예측하기', '챗봇']
+    sub_menu = ['어종별 경락가', '산지별 경락가']
+    ml_menu = ['날짜별 예측하기','상세 예측하기']
 
 
-    st.sidebar.title("- 호갱제로 -")
+    st.sidebar.markdown("""
+    <div style='text-align: center; padding: 20px 0;'>
+        <h1 style='color: #667eea; margin: 0; font-size: 50px;'>호갱제로</h1>
+        <p style='color: #666; font-size: 16px; margin-top: 6px;'>
+            투명한 수산 시장을 위한 AI 기반 데이터 분석 솔루션
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+    
     st.sidebar.title("")    
     choice = st.sidebar.selectbox('메뉴', menu)
+    
     
 
     if choice == menu[0]:

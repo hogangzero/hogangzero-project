@@ -99,7 +99,7 @@ def source():
     <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
             padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
     <p style="margin: 0; font-size: 15px; opacity: 0.95;">
-    💡 택하신 산지에서 취급하는 어종들의 평균 경락가를 확인해 보세요!
+    💡 택하신 산지에서 취급하는 어종들의 평균 경락가를 확인해보세요.
     </p>
     </div>
     """, unsafe_allow_html=True)
@@ -147,7 +147,7 @@ def source_species():
     <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
             padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
     <p style="margin: 0; font-size: 15px; opacity: 0.95;"> 
-    💡 원하시는 [어종]과 [산지]를 선택하여 시세를 확인해 보세요!
+    💡 원하시는 [어종]과 [산지]를 선택하여 시세를 확인해보세요.
     </p>
     </div>
     """, unsafe_allow_html=True)
