@@ -4,9 +4,34 @@ import io
 import joblib
 import streamlit as st
 import matplotlib.pyplot as plt
+from matplotlib import font_manager, rc
 import pandas as pd
 from prophet import Prophet
+import seaborn as sns
+import plotly.express as px
+import plotly.graph_objects as go
+from koreanize_matplotlib import koreanize
 
+# ============================================================
+# 전역 설정(Global Settings)
+# ============================================================
+
+# 한글 폰트 설정 (OS 자동 인식)
+try:
+    font_path = "/System/Library/Fonts/AppleSDGothicNeo.ttc"  # macOS
+    font_name = font_manager.FontProperties(fname=font_path).get_name()
+except:
+    font_path = "C:/Windows/Fonts/malgun.ttf"  # Windows
+    font_name = font_manager.FontProperties(fname=font_path).get_name()
+rc('font', family=font_name)
+plt.rcParams['axes.unicode_minus'] = False
+plt.style.use('seaborn-v0_8-whitegrid')
+plt.rcParams['axes.titlesize'] = 13
+plt.rcParams['axes.labelsize'] = 11
+plt.rcParams['legend.fontsize'] = 10
+koreanize()  # 보조 폰트 지정
+
+DATE_TICK_STEP = 3  # 날짜 라벨 표시 간격
 
 def _clean_price_series(s):
     # 문자열로 된 가격에서 쉼표와 따옴표 제거 후 float 변환
@@ -16,30 +41,41 @@ def _clean_price_series(s):
 
 
 def run_ml():
-    """Streamlit app: 어종별 월별 경락가를 Prophet으로 학습/예측합니다.
+    """수산물 경락가 예측 시스템
 
-    사용법(간단):
-    - 좌측에서 어종을 선택
-    - 예측할 연수(예: 3년)를 선택하면 월 단위로 (연수*12)개월을 예측
-
-    데이터: 프로젝트의 `data/수산물_통합_전처리.csv` 파일을 사용합니다.
-    컬럼: 'date' (YYYY-MM-DD), '공통어종' (어종 그룹), '평균가' (숫자, 쉼표 포함) 가 필요합니다.
+    수산물 도매 거래를 위한 가격 동향 분석 및 예측 도구입니다.
+    시장 가격 예측을 통해 효율적인 구매 계획을 수립할 수 있습니다.
     """
-    # 간단한 스타일링: 가운데 정렬된 제목과 서브타이틀
+    
+    # 페이지 기본 설정
+    st.set_page_config(
+        page_title="수산물 경락가 예측 시스템",
+        page_icon="🐟",
+        layout="wide"
+    )
+    
+    # 메인 타이틀 - 통일된 그라데이션 스타일
     st.markdown(
-        "<div style='text-align:center; padding:6px 0 0 0'>"
-        "<h1 style='margin:0'>날짜별 가격 예측</h1>"
-        "<p style='color:gray; margin:0'>Prophet 모델을 이용한 월별 예측</p>"
+        "<div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); "
+        "padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;'>"
+        "<h1 style='color: white; margin: 0;'>날짜별 가격 예측</h1>"
+        "<p style='color: white; margin: 5px 0; opacity: 0.95;'>Prophet 모델을 이용한 월별 예측</p>"
         "</div>",
         unsafe_allow_html=True,
     )
-    st.header('')
+    
+    # 안내 메시지
+    st.markdown(
+        "<div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); "
+        "padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;'>"
+        "<p style='margin: 0; font-size: 15px; opacity: 0.95;'> "
+        "💡 좌측 사이드바에서 어종과 예측 기간을 설정하세요." 
+        "</p>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
 
     st.markdown('---')
-    
-    
-    
-
 
     data_path = os.path.join('data', '수산물_통합전처리_3컬럼.csv')
     if not os.path.exists(data_path):
@@ -60,27 +96,54 @@ def run_ml():
     df = df.dropna(subset=['date'])
     df['평균가'] = _clean_price_series(df['평균가'])
 
+    # 사이드바 설정
     with st.sidebar:
+
         st.divider()
         st.sidebar.header('상세 검색하기')
+        
+        # 어종 선택
+        st.markdown("##### 🐟 어종 선택")
+        species_list = sorted(df['파일어종'].dropna().unique())
+        species = st.selectbox(
+            '분석할 어종을 선택하세요',
+            species_list,
+            help="가격을 예측하고 싶은 어종을 선택하세요"
+        )
+        
+        st.markdown("##### 📅 기간 설정")
+        years_to_forecast = st.slider(
+            '예측 기간',
+            min_value=1,
+            max_value=5,
+            value=2,
+            help="향후 몇 년간의 가격을 예측할지 선택하세요"
+        )
+        months = years_to_forecast * 12
 
-
-    species_list = sorted(df['파일어종'].dropna().unique())
-    species = st.sidebar.selectbox('어종 선택', species_list)
-
-    
-    years_to_forecast = st.sidebar.slider('예측 기간 (년)', min_value=1, max_value=10, value=3)
-    retrain = st.sidebar.checkbox('모델 재학습 (강제)', value=False)
-    months = years_to_forecast * 12
-
-    # 주요 월을 사용자가 선택할 수 있도록 함 (디자이너처럼 기본은 3,6,9,12)
-    
-    months_with_label = [f"{m}월" for m in range(1, 13)]
-
-    months_to_show = st.sidebar.multiselect('주요 월 선택', options=months_with_label,default=["3월", "6월", "9월", "12월"])
-    # 모델 관련 정보와 도움말
-    st.sidebar.markdown('---')
-    st.sidebar.markdown('Tip:달을 선택하여 각 연도의 핵심 시점을 빠르게 확인하세요.')
+        months_with_label = [f"{m}월" for m in range(1, 13)]
+        months_to_show = st.multiselect(
+            '주요 거래월 선택',
+            options=months_with_label,
+            default=["3월", "6월", "9월", "12월"],
+            help="중점적으로 보고 싶은 월을 선택하세요"
+        )
+        if not months_to_show:
+            st.warning('최소 한 개 이상의 거래월을 선택해주세요.')
+            return
+        
+        # 문자열 "N월"을 숫자로 변환
+        selected_months_num = [int(m.replace("월", "")) for m in months_to_show]
+            
+        # 거래 팁 제공
+        st.markdown("---")
+        with st.expander("💡 거래 전략 팁"):
+            st.markdown("""
+            - **분기별 가격 변동**: 3,6,9,12월의 가격 변화를 주목하세요
+            - **계절성 고려**: 어종별 성수기/비수기를 참고하세요
+            - **신뢰구간 활용**: 가격 변동 범위를 고려해 거래하세요
+            - **장기 트렌드**: 연간 가격 추세를 파악하세요
+            """)
 
     # 모델 디렉터리
     model_dir = os.path.join('.', 'models')
@@ -88,7 +151,6 @@ def run_ml():
     model_file = os.path.join(model_dir, f'model_{re.sub(r"[^0-9a-zA-Z가-힣_]","_", species)}.pkl')
 
     # 선택한 어종 데이터 월 단위 집계 (평균)
-    # 파일에서 사용자가 선택한 어종은 '파일어종' 컬럼에서 선택하므로 동일 컬럼으로 필터링합니다.
     df_sp = df[df['파일어종'] == species].copy()
     if df_sp.empty:
         st.warning('선택한 어종에 대한 데이터가 없습니다.')
@@ -99,96 +161,374 @@ def run_ml():
     monthly = monthly.dropna()
     monthly = monthly.rename(columns={'date': 'ds', '평균가': 'y'})
 
-    st.subheader(f'{species} - 학습 데이터 (월별 평균, 관측치 수: {len(monthly)})')
-    st.dataframe(monthly.tail(12))
 
+    # 최근 시장 동향 표시 - 스타일 변경
+    st.header('📊 최근 시장 동향')
+    st.markdown(f"""
+        <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+                    padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;'>
+            <p style='margin: 5px 0 0 0; font-size: 14px; opacity: 0.95;'>
+                {species}의 최근 12개월 거래 데이터 (총 {len(monthly):,}개 거래 기록 분석)
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
+
+    # 최근 12개월 데이터를 보기 좋게 표시
+    recent_data = monthly.tail(12).copy()
+    recent_data['ds'] = recent_data['ds'].dt.strftime('%Y년 %m월')
+    recent_data = recent_data.rename(columns={'ds': '거래월', 'y': '평균 경락가(원)'})
+    recent_data['평균 경락가(원)'] = recent_data['평균 경락가(원)'].apply(lambda x: f'{x:,.0f}')
+    st.dataframe(recent_data, hide_index=True)
+
+
+
+    # 모델 로드 또는 학습
     model = None
-    if os.path.exists(model_file) and (not retrain):
+    if os.path.exists(model_file):
         try:
             model = joblib.load(model_file)
-            st.info('저장된 모델을 불러왔습니다.')
+            st.info('✅ 가격 예측 준비가 완료되었습니다')
         except Exception as e:
-            st.warning(f'저장된 모델 로드 실패: {e}. 재학습을 진행합니다.')
             model = None
+            st.warning('시스템을 초기화하고 있습니다. 잠시만 기다려주세요.')
 
     if model is None:
-        with st.spinner('Prophet 모델 학습 중...'):
+        with st.spinner('🔄 시장 데이터 분석 중...'):
             model = Prophet(yearly_seasonality=True, weekly_seasonality=False, daily_seasonality=False)
-            # Prophet 기본으로도 월별 패턴을 잡지만 필요시 커스텀 시즌 추가 가능
             try:
                 model.fit(monthly)
                 joblib.dump(model, model_file)
-                st.success('모델 학습 완료 및 저장되었습니다.')
+                st.success('✨ 데이터 분석이 완료되었습니다!')
             except Exception as e:
-                st.error(f'모델 학습 실패: {e}')
+                st.error('😓 분석 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.')
                 return
-
-    # 예측
+            
+ 
+    # 가격 예측 수행
     future = model.make_future_dataframe(periods=months, freq='M')
     forecast = model.predict(future)
 
-    st.subheader('예측 결과')
-    # matplotlib figure 출력
-    fig = model.plot(forecast)
-    st.pyplot(fig)
+    st.markdown('')
+    st.markdown('---')
 
-    # 예측값 테이블 (월별) 제공
+    # 예측 결과 시각화 - Plotly 인터랙티브 차트
+    st.header('📈 전체 가격 동향 예측')
+    st.markdown("""
+        <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+                    padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;'>
+            <p style='margin: 5px 0 0 0; font-size: 14px; opacity: 0.95;'>
+                실제 거래가 | 예측 가격 | 신뢰 구간 (마우스 오버로 상세 정보 확인)
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Plotly 인터랙티브 차트 생성
+    forecast_display = forecast.copy()
+    forecast_display['ds'] = pd.to_datetime(forecast_display['ds'])
+    
+    # 실제 데이터와 예측 데이터 분리
+    actual_data = monthly.copy()
+    future_data = forecast_display[forecast_display['ds'] > actual_data['ds'].max()]
+    
+    # Figure 생성
+    fig_plotly = go.Figure()
+    
+    # 1. 신뢰구간 (하한)
+    fig_plotly.add_trace(go.Scatter(
+        x=forecast_display['ds'],
+        y=forecast_display['yhat_lower'],
+        fill=None,
+        mode='lines',
+        line=dict(width=0),
+        showlegend=False,
+        hoverinfo='skip'
+    ))
+    
+    # 2. 신뢰구간 (상한) - 하한과 상한 사이 영역 채우기
+    fig_plotly.add_trace(go.Scatter(
+        x=forecast_display['ds'],
+        y=forecast_display['yhat_upper'],
+        fill='tonexty',
+        mode='lines',
+        line=dict(width=0),
+        fillcolor='rgba(99, 110, 250, 0.2)',
+        name='신뢰구간',
+        hovertemplate='<b>신뢰구간</b><br>날짜: %{x|%Y년 %m월}<br>최대: %{y:,.0f}원<extra></extra>'
+    ))
+    
+    # 3. 예측선
+    fig_plotly.add_trace(go.Scatter(
+        x=forecast_display['ds'],
+        y=forecast_display['yhat'],
+        mode='lines',
+        name='예측 가격',
+        line=dict(color='rgb(99, 110, 250)', width=3, dash='dot'),
+        hovertemplate='<b>예측 가격</b><br>날짜: %{x|%Y년 %m월}<br>가격: %{y:,.0f}원<extra></extra>'
+    ))
+    
+    # 4. 실제 데이터 (점과 선)
+    fig_plotly.add_trace(go.Scatter(
+        x=actual_data['ds'],
+        y=actual_data['y'],
+        mode='lines+markers',
+        name='실제 거래가',
+        line=dict(color='rgb(0, 204, 150)', width=3),
+        marker=dict(size=6, color='rgb(0, 204, 150)', 
+                   line=dict(width=2, color='white')),
+        hovertemplate='<b>실제 거래가</b><br>날짜: %{x|%Y년 %m월}<br>가격: %{y:,.0f}원<extra></extra>'
+    ))
+    
+    # 5. 미래 예측 구간 강조
+    if not future_data.empty:
+        fig_plotly.add_vrect(
+            x0=future_data['ds'].min(),
+            x1=future_data['ds'].max(),
+            fillcolor="rgba(255, 200, 0, 0.1)",
+            layer="below",
+            line_width=0,
+            annotation_text="예측 구간",
+            annotation_position="top left",
+            annotation=dict(font_size=11, font_color="gray")
+        )
+    
+    # 레이아웃 설정 - 가독성 개선 (모든 글씨 검정색)
+    fig_plotly.update_layout(
+    title={
+        'text': f'<b>{species}</b> 경락가 동향 및 예측',
+        'font': {'size': 22, 'color': '#000000', 'family': 'Arial Black'},  # 검정색
+        'x': 0.5,
+        'xanchor': 'center'
+    },
+    xaxis=dict(
+        title='거래 시기',
+        showgrid=True,
+        gridcolor='rgba(150, 150, 150, 0.3)',
+        gridwidth=1,
+        dtick="M3",  # 3개월 간격
+        tickformat='%Y년 %m월',
+        tickfont=dict(size=12, color='#000000'),  # 검정색
+        linecolor='#2c3e50',
+        linewidth=2
+    ),
+    yaxis=dict(
+        title='경락가 (원)',
+        showgrid=True,
+        gridcolor='rgba(150, 150, 150, 0.3)',
+        gridwidth=1,
+        tickformat=',',
+        separatethousands=True,
+        tickfont=dict(size=12, color='#000000'),  # 검정색
+        linecolor='#2c3e50',
+        linewidth=2
+    ),
+    hovermode='x unified',
+    plot_bgcolor='#f8f9fa',  # 연한 회색 배경
+    paper_bgcolor='white',
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="right",
+        x=1,
+        font=dict(size=13, color='#000000', family='Arial'),  # 검정색
+        bgcolor='rgba(255, 255, 255, 0.9)',
+        bordercolor='#dee2e6',
+        borderwidth=1
+    ),
+    height=500,
+    margin=dict(t=80, b=50, l=50, r=50)
+    )
+
+    # x축, y축 타이틀 폰트 스타일 별도 지정
+    fig_plotly.update_xaxes(title_font=dict(size=15, color='#000000', family='Arial'))
+    fig_plotly.update_yaxes(title_font=dict(size=15, color='#000000', family='Arial'))
+
+    
+    # Streamlit에 표시
+    st.plotly_chart(fig_plotly, use_container_width=True)
+
+    st.markdown('')
+    st.markdown('---')
+
+    # 예측 데이터 준비
     forecast_monthly = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].copy()
     forecast_monthly['ds'] = pd.to_datetime(forecast_monthly['ds']).dt.to_period('M').dt.to_timestamp()
     
-    # 연도/주요달(3,6,9,12)별 예측 결과를 텍스트로 표시
-    st.subheader("연도별 주요 달(3,6,9,12) 예측 가격")
+    # 주요 거래월 예측 결과 - 스타일 변경
+    st.header('💰 주요 거래월 예상 경락가')
+    st.markdown("""
+        <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+                    padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;'>
+            <p style='margin: 5px 0 0 0; font-size: 14px; opacity: 0.95;'>
+                선택하신 주요 거래월의 예상 경락가와 변동 범위입니다
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+    
     last_training_date = monthly['ds'].max()
     future_forecasts = forecast_monthly[forecast_monthly['ds'] > last_training_date]
 
-    # 디자이너 스타일: 연도별로 행을 만들고, 주요 달을 칼럼으로 정렬하여 metric 카드 형태로 표현
+    # 연도별로 행을 만들고, 주요 달을 칼럼으로 정렬하여 metric 카드 형태로 표현
     years = sorted(future_forecasts['ds'].dt.year.unique())
+    
     for year in years:
         year_data = future_forecasts[future_forecasts['ds'].dt.year == year]
         if year_data.empty:
             continue
-        st.markdown(f"### {year}년")
-
-        cols = st.columns(len(months_to_show))
-        for col, m in zip(cols, months_to_show):
-            with col:
-                row = year_data[year_data['ds'].dt.month == m]
-                if row.empty:
-                    st.metric(label=f"{m}월", value="데이터 없음")
-                    st.caption('예측 범위에 없음')
-                    continue
-                r = row.iloc[0]
-                predicted_price = r['yhat']
-                lower_bound = r['yhat_lower']
-                upper_bound = r['yhat_upper']
-                # 메트릭 카드로 출력 (숫자 형식: 천단위 콤마)
-                st.metric(label=f"{m}월", value=f"{predicted_price:,.0f}원")
-                st.caption(f"신뢰구간: {lower_bound:,.0f}원 ~ {upper_bound:,.0f}원")
-        st.markdown("---")
-
-    # 테이블로도 전체 데이터 표시
-    st.subheader("예측 결과 테이블")
-    st.dataframe(forecast_monthly.tail(months + 6))
-
-    # CSV 다운로드
-    csv_buf = io.StringIO()
-    forecast_monthly.to_csv(csv_buf, index=False)
-    csv_bytes = csv_buf.getvalue().encode('utf-8')
-    st.download_button(label='예측 결과 다운로드 (CSV)', data=csv_bytes, file_name=f'forecast_{species}.csv', mime='text/csv')
-
-    # 그래프 PNG로 다운로드 (디자이너용 보고서 첨부 가능)
-    try:
-        img_buf = io.BytesIO()
-        fig.savefig(img_buf, format='png', bbox_inches='tight')
-        img_buf.seek(0)
-        st.download_button(label='그래프 다운로드 (PNG)', data=img_buf, file_name=f'forecast_{species}.png', mime='image/png')
-    except Exception:
-        # fig가 없거나 저장 불가 시 무시
-        pass
-
-    st.markdown('---')
-    st.markdown('### 노트')
-    st.markdown('- 데이터는 `data/수산물_통합_전처리.csv`의 `공통어종` 및 `평균가`를 사용하여 월별 평균을 계산합니다.')
-
-
         
+        # 연도 헤더 - 도매상 친화적 디자인
+        st.markdown(f"""
+            <div style='background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+                        padding: 8px 16px; border-radius: 8px; margin: 20px 0 10px 0;'>
+                <h4 style='color: white; margin: 0; font-weight: 600;'>
+                    📅 {year}년 예상 경락가
+                </h4>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # 선택한 월들에 대한 컬럼 생성
+        cols = st.columns(len(selected_months_num))
+        
+        for col, month_num in zip(cols, selected_months_num):
+            with col:
+                row = year_data[year_data['ds'].dt.month == month_num]
+                
+                if row.empty:
+                    # 데이터 없을 때 스타일
+                    st.markdown(f"""
+                        <div style='background: #f8f9fa; padding: 15px; border-radius: 8px; 
+                                    border-left: 4px solid #dee2e6; text-align: center;'>
+                            <div style='color: #6c757d; font-size: 14px; font-weight: 600;'>
+                                {month_num}월
+                            </div>
+                            <div style='color: #adb5bd; font-size: 12px; margin-top: 5px;'>
+                                예측 범위 외
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    r = row.iloc[0]
+                    predicted_price = r['yhat']
+                    lower_bound = r['yhat_lower']
+                    upper_bound = r['yhat_upper']
+                    
+                    # 가격 변동 추세 계산 (이전 월 대비)
+                    prev_month_data = year_data[year_data['ds'].dt.month == month_num - 1]
+                    if not prev_month_data.empty:
+                        prev_price = prev_month_data.iloc[0]['yhat']
+                        price_change = predicted_price - prev_price
+                        change_pct = (price_change / prev_price) * 100
+                        
+                        if price_change > 0:
+                            trend_color = "#dc3545"  # 빨강 (상승)
+                            trend_icon = "📈"
+                            trend_text = f"+{change_pct:.1f}%"
+                        else:
+                            trend_color = "#28a745"  # 초록 (하락)
+                            trend_icon = "📉"
+                            trend_text = f"{change_pct:.1f}%"
+                    else:
+                        trend_color = "#6c757d"
+                        trend_icon = "➖"
+                        trend_text = "-"
+                    
+                    # 도매상 친화적 카드 디자인
+                    st.markdown(f"""
+                        <div style='background: white; padding: 15px; border-radius: 8px;
+                                    border: 2px solid #e9ecef; box-shadow: 0 2px 4px rgba(0,0,0,0.05);'>
+                            <div style='color: #495057; font-size: 14px; font-weight: 600; margin-bottom: 8px;'>
+                                {month_num}월 {trend_icon}
+                            </div>
+                            <div style='color: #212529; font-size: 20px; font-weight: 700; margin-bottom: 8px;'>
+                                {predicted_price:,.0f}원
+                            </div>
+                            <div style='color: {trend_color}; font-size: 12px; font-weight: 600; margin-bottom: 8px;'>
+                                {trend_text}
+                            </div>
+                            <div style='background: #f8f9fa; padding: 6px; border-radius: 4px; font-size: 11px;'>
+                                <div style='color: #6c757d;'>변동 범위</div>
+                                <div style='color: #495057; font-weight: 500;'>
+                                    {lower_bound:,.0f}원<br>~ {upper_bound:,.0f}원
+                                </div>
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+
+    st.markdown('')
+    st.markdown('---')
+    # 상세 데이터 및 다운로드 섹션 - 스타일 변경
+    st.markdown("""
+        <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+                    padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;'>
+            <h3 style='color: white; margin: 0; font-size: 18px;'>📊 상세 데이터</h3>
+            <p style='margin: 5px 0 0 0; font-size: 14px; opacity: 0.95;'>
+                월별 예측 가격 상세 정보와 데이터 다운로드
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # 데이터 테이블 표시
+    with st.expander("📋 월별 상세 예측 데이터"):
+        formatted_data = forecast_monthly.tail(months).copy()
+        formatted_data['ds'] = formatted_data['ds'].dt.strftime('%Y년 %m월')
+        formatted_data.columns = ['거래월', '예측가격', '최소예상가격', '최대예상가격']
+        formatted_data['예측가격'] = formatted_data['예측가격'].apply(lambda x: f'{x:,.0f}원')
+        formatted_data['최소예상가격'] = formatted_data['최소예상가격'].apply(lambda x: f'{x:,.0f}원')
+        formatted_data['최대예상가격'] = formatted_data['최대예상가격'].apply(lambda x: f'{x:,.0f}원')
+        st.dataframe(formatted_data, hide_index=True)
+
+    # 다운로드 섹션
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # 엑셀 다운로드
+        csv_buf = io.StringIO()
+        forecast_monthly.to_csv(csv_buf, index=False)
+        csv_bytes = csv_buf.getvalue().encode('utf-8')
+        st.download_button(
+            label='📥 예측 데이터 다운로드 (Excel)',
+            data=csv_bytes,
+            file_name=f'{species}_가격예측_{years_to_forecast}년.csv',
+            mime='text/csv',
+            help='월별 예측 가격을 엑셀 파일로 저장합니다'
+        )
+
+    with col2:
+        # 그래프 이미지 다운로드 - Plotly 차트를 이미지로 저장
+        try:
+            import plotly.io as pio
+            img_bytes = pio.to_image(fig_plotly, format='png', width=1200, height=600, scale=2)
+            st.download_button(
+                label='📥 가격 동향 그래프 (이미지)',
+                data=img_bytes,
+                file_name=f'{species}_가격동향_{years_to_forecast}년.png',
+                mime='image/png',
+                help='가격 동향 그래프를 고품질 이미지로 저장합니다'
+            )
+        except Exception as e:
+            st.warning(f"그래프 저장을 위해 kaleido 패키지가 필요합니다. 'pip install kaleido' 실행 후 사용하세요.")
+
+    # 참고 사항
+    st.markdown('---')
+    with st.expander("ℹ️ 데이터 신뢰도 안내"):
+        st.markdown("""
+        **예측 정확도 관련 참고사항**
+        
+        - 이 예측은 과거 실제 거래 데이터를 기반으로 한 통계적 분석 결과입니다
+        - 실제 시장 가격은 날씨, 수급 상황 등 다양한 요인에 의해 변동될 수 있습니다
+        - 신뢰구간은 예상되는 가격의 변동 범위를 나타냅니다
+        - 가까운 미래일수록 예측의 정확도가 높습니다
+        
+        **활용 방법**
+        
+        - 구매 계획 수립 시 참고 자료로 활용하세요
+        - 계절성과 장기 트렌드를 고려한 의사결정에 활용하세요
+        - 정기적으로 예측을 확인하여 시장 동향을 파악하세요
+        """)
+
+
+if __name__ == "__main__":
+    run_ml()
