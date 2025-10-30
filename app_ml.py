@@ -67,7 +67,7 @@ def run_ml():
     # 안내 메시지
     st.markdown(
         "<div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); "
-        "padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;'>"
+        "padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>"
         "<p style='margin: 0; font-size: 15px; opacity: 0.95;'> "
         "💡 좌측 사이드바에서 어종과 예측 기간을 설정하세요." 
         "</p>"
@@ -163,23 +163,24 @@ def run_ml():
 
 
     # 최근 시장 동향 표시 - 스타일 변경
-    st.header('📊 최근 시장 동향')
+    st.subheader('① 최근 시장 동향')
     st.markdown(f"""
         <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-                    padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;'>
+                    padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>
             <p style='margin: 5px 0 0 0; font-size: 14px; opacity: 0.95;'>
-                {species}의 최근 12개월 거래 데이터 (총 {len(monthly):,}개 거래 기록 분석)
+                💡 {species}의 최근 12개월 거래 데이터 (총 {len(monthly):,}개 거래 기록 분석) 입니다.
             </p>
         </div>
     """, unsafe_allow_html=True)
 
 
     # 최근 12개월 데이터를 보기 좋게 표시
-    recent_data = monthly.tail(12).copy()
-    recent_data['ds'] = recent_data['ds'].dt.strftime('%Y년 %m월')
-    recent_data = recent_data.rename(columns={'ds': '거래월', 'y': '평균 경락가(원)'})
-    recent_data['평균 경락가(원)'] = recent_data['평균 경락가(원)'].apply(lambda x: f'{x:,.0f}')
-    st.dataframe(recent_data, hide_index=True)
+    with st.expander("최근 12개월 시세 데이터"):
+        recent_data = monthly.tail(12).copy()
+        recent_data['ds'] = recent_data['ds'].dt.strftime('%Y년 %m월')
+        recent_data = recent_data.rename(columns={'ds': '거래월', 'y': '평균 경락가(원)'})
+        recent_data['평균 경락가(원)'] = recent_data['평균 경락가(원)'].apply(lambda x: f'{x:,.0f}')
+        st.dataframe(recent_data, hide_index=True)
 
 
 
@@ -188,7 +189,6 @@ def run_ml():
     if os.path.exists(model_file):
         try:
             model = joblib.load(model_file)
-            st.info('✅ 가격 예측 준비가 완료되었습니다')
         except Exception as e:
             model = None
             st.warning('시스템을 초기화하고 있습니다. 잠시만 기다려주세요.')
@@ -203,22 +203,47 @@ def run_ml():
             except Exception as e:
                 st.error('😓 분석 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.')
                 return
-            
- 
+
+
+    # 상세 데이터 및 다운로드 섹션 - 스타일 변경
+    st.subheader('②  가격 예측')
+    st.markdown("""
+        <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+                    padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>
+            <p style='margin: 5px 0 0 0; font-size: 14px; opacity: 0.95;'>
+                💡 월별 시세 예측을 확인하세요.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
     # 가격 예측 수행
     future = model.make_future_dataframe(periods=months, freq='M')
     forecast = model.predict(future)
+
+    # 예측 데이터 준비
+    forecast_monthly = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].copy()
+    forecast_monthly['ds'] = pd.to_datetime(forecast_monthly['ds']).dt.to_period('M').dt.to_timestamp()
+
+    # 데이터 테이블 표시
+    with st.expander("월별 시세 예측 데이터"):
+        formatted_data = forecast_monthly.tail(months).copy()
+        formatted_data['ds'] = formatted_data['ds'].dt.strftime('%Y년 %m월')
+        formatted_data.columns = ['거래월', '예측가격', '최소예상가격', '최대예상가격']
+        formatted_data['예측가격'] = formatted_data['예측가격'].apply(lambda x: f'{x:,.0f}원')
+        formatted_data['최소예상가격'] = formatted_data['최소예상가격'].apply(lambda x: f'{x:,.0f}원')
+        formatted_data['최대예상가격'] = formatted_data['최대예상가격'].apply(lambda x: f'{x:,.0f}원')
+        st.dataframe(formatted_data, hide_index=True)
 
     st.markdown('')
     st.markdown('---')
 
     # 예측 결과 시각화 - Plotly 인터랙티브 차트
-    st.header('📈 전체 가격 동향 예측')
+    st.subheader('② 전체 가격 동향 예측')
     st.markdown("""
         <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-                    padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;'>
+                    padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>
             <p style='margin: 5px 0 0 0; font-size: 14px; opacity: 0.95;'>
-                실제 거래가 | 예측 가격 | 신뢰 구간 (마우스 오버로 상세 정보 확인)
+                💡 실제 거래가 , 예측 가격 , 신뢰 구간  (마우스 오버로 상세 정보 확인하세요.)
             </p>
         </div>
     """, unsafe_allow_html=True)
@@ -351,17 +376,13 @@ def run_ml():
     st.markdown('')
     st.markdown('---')
 
-    # 예측 데이터 준비
-    forecast_monthly = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].copy()
-    forecast_monthly['ds'] = pd.to_datetime(forecast_monthly['ds']).dt.to_period('M').dt.to_timestamp()
-    
     # 주요 거래월 예측 결과 - 스타일 변경
-    st.header('💰 주요 거래월 예상 경락가')
+    st.subheader('③ 주요 거래월 예상 경락가')
     st.markdown("""
         <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-                    padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;'>
+                    padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>
             <p style='margin: 5px 0 0 0; font-size: 14px; opacity: 0.95;'>
-                선택하신 주요 거래월의 예상 경락가와 변동 범위입니다
+                💡 선택하신 주요 거래월의 예상 경락가와 변동 범위입니다
             </p>
         </div>
     """, unsafe_allow_html=True)
@@ -379,10 +400,10 @@ def run_ml():
         
         # 연도 헤더 - 도매상 친화적 디자인
         st.markdown(f"""
-            <div style='background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-                        padding: 8px 16px; border-radius: 8px; margin: 20px 0 10px 0;'>
+            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        padding: 10px 20px; border-radius: 8px; margin: 30px 0 10px 0;'>
                 <h4 style='color: white; margin: 0; font-weight: 600;'>
-                    📅 {year}년 예상 경락가
+                    {year}년 예상 경락가
                 </h4>
             </div>
         """, unsafe_allow_html=True)
@@ -457,63 +478,9 @@ def run_ml():
         
         st.markdown("<br>", unsafe_allow_html=True)
 
-    st.markdown('')
-    st.markdown('---')
-    # 상세 데이터 및 다운로드 섹션 - 스타일 변경
-    st.markdown("""
-        <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-                    padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;'>
-            <h3 style='color: white; margin: 0; font-size: 18px;'>📊 상세 데이터</h3>
-            <p style='margin: 5px 0 0 0; font-size: 14px; opacity: 0.95;'>
-                월별 예측 가격 상세 정보와 데이터 다운로드
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # 데이터 테이블 표시
-    with st.expander("📋 월별 상세 예측 데이터"):
-        formatted_data = forecast_monthly.tail(months).copy()
-        formatted_data['ds'] = formatted_data['ds'].dt.strftime('%Y년 %m월')
-        formatted_data.columns = ['거래월', '예측가격', '최소예상가격', '최대예상가격']
-        formatted_data['예측가격'] = formatted_data['예측가격'].apply(lambda x: f'{x:,.0f}원')
-        formatted_data['최소예상가격'] = formatted_data['최소예상가격'].apply(lambda x: f'{x:,.0f}원')
-        formatted_data['최대예상가격'] = formatted_data['최대예상가격'].apply(lambda x: f'{x:,.0f}원')
-        st.dataframe(formatted_data, hide_index=True)
-
-    # 다운로드 섹션
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # 엑셀 다운로드
-        csv_buf = io.StringIO()
-        forecast_monthly.to_csv(csv_buf, index=False)
-        csv_bytes = csv_buf.getvalue().encode('utf-8')
-        st.download_button(
-            label='📥 예측 데이터 다운로드 (Excel)',
-            data=csv_bytes,
-            file_name=f'{species}_가격예측_{years_to_forecast}년.csv',
-            mime='text/csv',
-            help='월별 예측 가격을 엑셀 파일로 저장합니다'
-        )
-
-    with col2:
-        # 그래프 이미지 다운로드 - Plotly 차트를 이미지로 저장
-        try:
-            import plotly.io as pio
-            img_bytes = pio.to_image(fig_plotly, format='png', width=1200, height=600, scale=2)
-            st.download_button(
-                label='📥 가격 동향 그래프 (이미지)',
-                data=img_bytes,
-                file_name=f'{species}_가격동향_{years_to_forecast}년.png',
-                mime='image/png',
-                help='가격 동향 그래프를 고품질 이미지로 저장합니다'
-            )
-        except Exception as e:
-            st.warning(f"그래프 저장을 위해 kaleido 패키지가 필요합니다. 'pip install kaleido' 실행 후 사용하세요.")
-
     # 참고 사항
     st.markdown('---')
-    with st.expander("ℹ️ 데이터 신뢰도 안내"):
+    with st.expander("ℹ데이터 신뢰도 안내"):
         st.markdown("""
         **예측 정확도 관련 참고사항**
         
