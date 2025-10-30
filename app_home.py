@@ -16,7 +16,6 @@ except:
     font_name = font_manager.FontProperties(fname=font_path).get_name()
 rc('font', family=font_name)
 plt.rcParams['axes.unicode_minus'] = False
-plt.rcParams['axes.unicode_minus'] = False
 plt.style.use('seaborn-v0_8-whitegrid')
 koreanize()
 
@@ -66,21 +65,94 @@ def run_home():
         </svg>
         <div style='text-align: center; position: relative; z-index: 1;'>
             <h1 style='color: white; margin: 0; font-size: 3.9em; font-weight: 800; 
-                       letter-spacing: 6px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);'>
+                       letter-spacing: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);'>
                 호갱제로
             </h1>
-            <div style= border-radius: 2px; opacity: 0.8;'></div>
-            <p style='color: rgba(255,255,255,0.95); font-size: 1.3em; margin: 10px 0 0 0;
-                      font-weight: 500; letter-spacing: 0.5px;'>
+            <div style=
+                        border-radius: 2px; opacity: 0.8;'></div>
+            <p style='color: rgba(255,255,255,0.95); font-size: 1.4em; margin: 10px 0 0 0;
+                      font-weight: 500; letter-spacing: 2.5px;'>
                 투명한 수산 시장을 위한 AI 기반 데이터 분석 솔루션
             </p>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.subheader('')
-    st.markdown('---')
+    st.markdown("<br>", unsafe_allow_html=True)
     
+    # 주요 기능 안내 카드
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        <div style="background: white; padding: 20px; border-radius: 10px; 
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 150px;">
+            <h3 style="color: #667eea; margin: 0; font-size: 1.2em;">어종별 실시간 시세</h3>
+            <p style="color: #666; margin-top: 10px; font-size: 0.9em; line-height: 1.5;">
+            활어·냉동·선어 상태별<br/>
+            가격 비교로 최적 구매시기 파악
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div style="background: white; padding: 20px; border-radius: 10px; 
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 150px;">
+            <h3 style="color: #667eea; margin: 0; font-size: 1.2em;">산지별 가격 비교</h3>
+            <p style="color: #666; margin-top: 10px; font-size: 0.9em; line-height: 1.5;">
+            전국 산지 간 가격 차이로<br/>
+            합리적인 거래처 선정 지원
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div style="background: white; padding: 20px; border-radius: 10px; 
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 150px;">
+            <h3 style="color: #667eea; margin: 0; font-size: 1.2em;">AI 가격 예측</h3>
+            <p style="color: #666; margin-top: 10px; font-size: 0.9em; line-height: 1.5;">
+            머신러닝 기반 미래 시세 예측과<br/>
+            24시간 실시간 상담 서비스
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 사용 방법 안내 (접을 수 있는 형태)
+    with st.expander("💡 대시보드 사용 가이드"):
+        st.markdown("""
+        ### 📌 이렇게 활용하세요
+        
+        **1️⃣ 어종별 시세 분석**
+        - 관심 어종을 선택하여 일별 가격 변동 추이를 확인
+        - 평균가, 최고가, 최저가를 비교하여 거래 시기 결정
+        - 품종 및 상태별(활어/냉동/선어) 가격 차이 분석
+        
+        **2️⃣ 산지별 시세 비교**
+        - 특정 산지의 전체 어종 평균 가격 조회
+        - 거래량 Top 10 어종의 산지별 가격 비교
+        - 월별 가격 추이를 확인하여 최적의 거래처 선정
+        
+        **3️⃣ AI 챗봇 활용**
+        - Google API 기반 실시간 시세 조회
+        - RAG 기반 수산물 유통, 보관, 품질 관리 전문 정보
+        - 24시간 언제든지 궁금한 사항 문의 가능
+        
+        **4️⃣ 제철 어종 확인**
+        - 월별 가격이 가장 저렴한 제철 어종 추천
+        - 계절별 최적의 구매 시기 파악
+        
+        ---
+        
+        📍 **데이터 출처**: 수산물유통정보시스템(FIPS) | 해양환경정보시스템  
+        📅 **사용된 데이터 기간**: 2021년 ~ 2024년
+        """)
+    
+    st.markdown("---")
+    st.markdown("<br>", unsafe_allow_html=True)
     
     # 데이터 로드
     df = load_data()
@@ -89,21 +161,20 @@ def run_home():
         return
     
     # ============================================================
-    # AI 챗봇 섹션 (2개) - 크기 축소 & 색상 통일
+    # AI 챗봇 섹션 - 통일된 헤더 스타일
     # ============================================================
     st.markdown("""
     <div style='background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-                padding: 16px; border-radius: 40px; margin-bottom:40px;
+                padding: 16px; border-radius: 40px; margin-bottom: 40px;
                 box-shadow: 0 4px 15px rgba(0,0,0,0.1);
                 width: 600px; 
                 margin-left: auto; margin-right: auto;'>
-        <h2 style='color: #2c3e50; margin: 0 0 2px 0; font-size: 2.2em;
+        <h2 style='color: #2c3e50; margin: 0; font-size: 2.2em;
                    font-weight: 900; text-align: center;'>
             AI 챗봇
         </h2>
     </div>
     """, unsafe_allow_html=True)
-
     
     col_chat1, col_chat2 = st.columns(2)
     
@@ -147,24 +218,21 @@ def run_home():
         </div>
         """, unsafe_allow_html=True)
     
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<br><br>", unsafe_allow_html=True)
     
     # ============================================================
-    # 1. KPI 카드 섹션 - 2개만 (등록 어종, 거래 산지)
+    # 1. KPI 카드 섹션 - 통일된 헤더 + 가로형 카드
     # ============================================================
-    st.markdown('---')
-
-
     st.markdown("""
-   <div style='background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-                padding: 16px; border-radius: 40px; margin-bottom:50px;
+    <div style='background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                padding: 16px; border-radius: 40px; margin-bottom: 40px;
                 box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-                width:600px; 
+                width: 600px; 
                 margin-left: auto; margin-right: auto;'>
-        <h2 style='color: #2c3e50; margin: 0 0 2px 0; font-size: 2.2em;
+        <h2 style='color: #2c3e50; margin: 0; font-size: 2.2em;
                    font-weight: 900; text-align: center;'>
-                주요 지표</h3>
+            주요 지표
+        </h2>
     </div>
     """, unsafe_allow_html=True)
     
@@ -175,54 +243,68 @@ def run_home():
     total_species = df['파일어종'].nunique()
     total_sources = df['산지'].nunique()
     
-    # KPI 카드 2개만 - 중앙 정렬
-    col_space1, col1, col2, col_space2 = st.columns([1, 2, 2, 1])
+    # KPI 카드 2개 - 가로형 디자인
+    col_space1, col1, col2, col_space2 = st.columns([0.5, 2, 2, 0.5])
     
     with col1:
         st.markdown(f"""
         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                    padding: 40px 30px; border-radius: 15px; 
+                    padding: 25px 30px; border-radius: 15px; 
                     box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
-                    text-align: center;
-                    display: flex; flex-direction: column; justify-content: center;'>
-            <p style='color: rgba(255,255,255,0.9); font-size: 2em; 
-                      margin: 0 0 15px 0; font-weight: 500;'>등록 어종</p>
-            <h2 style='color: white; margin: 0; font-size: 3.5em; font-weight: 700;'>
-                {total_species:,}
-            </h2>
-            <p style='color: rgba(255,255,255,0.8); font-size: 2em; margin: 10px 0 0 0;'>종</p>
+                    display: flex; justify-content: space-between; align-items: center;'>
+            <div style='text-align: left;'>
+                <p style='color: rgba(255,255,255,0.9); font-size: 1.1em; 
+                          margin: 0; font-weight: 500;'>등록 어종</p>
+                <p style='color: rgba(255,255,255,0.7); font-size: 0.9em; margin: 5px 0 0 0;'>
+                    등록된 전체 어종 수
+                </p>
+            </div>
+            <div style='text-align: right;'>
+                <h2 style='color: white; margin: 0; font-size: 2.8em; font-weight: 700;'>
+                    {total_species:,}
+                </h2>
+                <p style='color: rgba(255,255,255,0.8); font-size: 1em; margin: 5px 0 0 0;'>종</p>
+            </div>
         </div>
         """, unsafe_allow_html=True)
     
     with col2:
         st.markdown(f"""
         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                    padding: 40px 30px; border-radius: 15px; 
+                    padding: 25px 30px; border-radius: 15px; 
                     box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
-                    text-align: center;
-                    display: flex; flex-direction: column; justify-content: center;'>
-            <p style='color: rgba(255,255,255,0.9); font-size: 2em; 
-                      margin: 0 0 15px 0; font-weight: 500;'>거래 산지</p>
-            <h2 style='color: white; margin: 0; font-size: 3.5em; font-weight: 700;'>
-                {total_sources:,}
-            </h2>
-            <p style='color: rgba(255,255,255,0.8); font-size: 2em; margin: 10px 0 0 0;'>곳</p>
+                    display: flex; justify-content: space-between; align-items: center;'>
+            <div style='text-align: left;'>
+                <p style='color: rgba(255,255,255,0.9); font-size: 1.1em; 
+                          margin: 0; font-weight: 500;'>거래 산지</p>
+                <p style='color: rgba(255,255,255,0.7); font-size: 0.9em; margin: 5px 0 0 0;'>
+                    전국 거래 산지 수
+                </p>
+            </div>
+            <div style='text-align: right;'>
+                <h2 style='color: white; margin: 0; font-size: 2.8em; font-weight: 700;'>
+                    {total_sources:,}
+                </h2>
+                <p style='color: rgba(255,255,255,0.8); font-size: 1em; margin: 5px 0 0 0;'>곳</p>
+            </div>
         </div>
         """, unsafe_allow_html=True)
     
     st.markdown("<br><br>", unsafe_allow_html=True)
     
-    st.markdown('---')
-
     # ============================================================
-    # 2. 오늘의 시세 (인기 어종 Top 6)
+    # 2. 오늘의 시세 - 통일된 헤더
     # ============================================================
     st.markdown("""
-    <div style='background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); 
-                padding: 15px 30px; border-radius: 12px; margin-bottom: 30px;
-                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);'>
-        <h3 style='color: white; margin: 0; font-size: 1.5em; font-weight: 600;
-                   text-align: center;'>오늘의 시세 (인기 어종 6종)</h3>
+    <div style='background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                padding: 16px; border-radius: 40px; margin-bottom: 40px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                width: 600px; 
+                margin-left: auto; margin-right: auto;'>
+        <h2 style='color: #2c3e50; margin: 0; font-size: 2.2em;
+                   font-weight: 900; text-align: center;'>
+            오늘의 시세
+        </h2>
     </div>
     """, unsafe_allow_html=True)
     
@@ -295,17 +377,19 @@ def run_home():
     
     st.markdown("<br><br>", unsafe_allow_html=True)
     
-    st.markdown('---')
-
     # ============================================================
-    # 3. 제철 어종 - 깔끔한 단색 디자인
+    # 3. 제철 어종 - 통일된 헤더
     # ============================================================
     st.markdown("""
-    <div style='background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-                padding: 15px 30px; border-radius: 12px; margin-bottom: 20px;
-                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);'>
-        <h3 style='color: white; margin: 0; font-size: 1.5em; font-weight: 600;
-                   text-align: center;'>제철 어종 추천</h3>
+    <div style='background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                padding: 16px; border-radius: 40px; margin-bottom: 40px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                width: 600px; 
+                margin-left: auto; margin-right: auto;'>
+        <h2 style='color: #2c3e50; margin: 0; font-size: 2.2em;
+                   font-weight: 900; text-align: center;'>
+            제철 어종 추천
+        </h2>
     </div>
     """, unsafe_allow_html=True)
 
@@ -349,10 +433,10 @@ def run_home():
 
     seasonal_df = pd.DataFrame(seasonal_data)
 
-    # 월별 추천 카드 표시 - 깔끔한 단색 디자인
+    # 월별 추천 카드 표시
     cols = st.columns(3)
     
-    # 월별 라벨 색상 (그라데이션 대신 단색)
+    # 월별 라벨 색상
     month_colors = {
         prev_month: "#5a67d8",  # 보라
         this_month: "#48bb78",  # 초록
