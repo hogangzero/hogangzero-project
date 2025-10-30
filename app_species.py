@@ -165,8 +165,91 @@ def species_price():
     ③ 해양데이터(수온, 기온, 풍속) 연계분석
     """
 
-    st.header('[ 어종별 시세 분석 대시보드 ]')
-    st.subheader('')
+    # ============================================================
+
+    # 메인 타이틀과 설명
+    st.markdown("""
+    <div style="text-align: center; padding: 30px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                border-radius: 15px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h1 style="color: white; margin: 0; font-size: 2.5em; font-weight: 700;">
+             어종별 시세 분석 대시보드
+        </h1>
+        <p style="color: rgba(255,255,255,0.95); margin-top: 15px; font-size: 1.15em; line-height: 0.7;">
+            실시간 어종별 경락가 추이와 해양환경 데이터를 한눈에 확인하세요
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 주요 기능 안내 카드
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        <div style="background: white; padding: 20px; border-radius: 10px; 
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 150px;">
+            <h3 style="color: #667eea; margin: 0; font-size: 1.2em;"> 어종별 시세</h3>
+            <p style="color: #666; margin-top: 10px; font-size: 0.9em; line-height: 1.5;">
+            다양한 어종의 일별 경락가<br/>
+            추이를 실시간으로 분석
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div style="background: white; padding: 20px; border-radius: 10px; 
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 150px;">
+            <h3 style="color: #667eea; margin: 0; font-size: 1.2em;"> 품종별 비교</h3>
+            <p style="color: #666; margin-top: 10px; font-size: 0.9em; line-height: 1.5;">
+            활어·냉동·선어 등<br/>
+            상태별 가격 비교 분석
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div style="background: white; padding: 20px; border-radius: 10px; 
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 150px;">
+            <h3 style="color: #667eea; margin: 0; font-size: 1.2em;"> 해양데이터</h3>
+            <p style="color: #666; margin-top: 10px; font-size: 0.9em; line-height: 1.5;">
+            수온·기온·풍속과<br/>
+            시세의 상관관계 분석
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 사용 방법 안내 (접을 수 있는 형태)
+    with st.expander("대시보드 사용 가이드"):
+        st.markdown("""
+
+        ### 이렇게 활용하세요
+        ######
+        
+        
+        **1️ 어종별 시세 분석**
+        - 관심 어종을 선택하여 일별 가격 변동 추이를 확인
+        - 평균가, 최고가, 최저가를 비교하여 거래 시기 결정
+        
+        **2️⃣ 품종 및 상태별 비교**
+        - 동일 어종의 활어/냉동/선어 상태별 가격 차이 분석
+        - 계절별 최적 거래 시기 파악
+        
+        **3️⃣ 해양환경 연계 분석**
+        - 수온, 기온, 풍속 등 해양 데이터가 가격에 미치는 영향 분석
+        - 산지별 환경 요인과 시세의 상관관계 확인
+        
+        ---  
+         **사용된 데이터 기간** : 2021년 ~ 2024년
+ """)
+    st.markdown("---")
+
+
+
+    
+
 
 
     # 1️⃣ CSV 데이터 로드 및 전처리
@@ -180,12 +263,12 @@ def species_price():
     # -------------------------------------------------
     # ① 어종별 일별 경락가 변동 추이
     # -------------------------------------------------
-    st.header("①  어종별 시세 ")
+    st.subheader("① 어종별 평균 경매가 ")
     # 설명 캡션 추가
     st.markdown("""
     <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
-            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
-    <p style="margin: 0; font-size: 15px; opacity: 0.95;"> 
+            padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;">
+    <p style="margin: 0; font-size: 14px; opacity: 1;"> 
     💡 어종별 시세를 한눈에 알아보세요.
     </p>
     </div>
@@ -370,12 +453,12 @@ def species_price():
     # ② 파일어종 및 세부 어종별 낙찰가 비교
     # -------------------------------------------------
     st.markdown('---')
-    st.header("② 품종 및 상태별 시세 ")
+    st.subheader("② 품종 및 상태별 어종 경매가 ")
     # 설명 캡션 추가
     st.markdown("""
     <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
-            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
-    <p style="margin: 0; font-size: 15px; opacity: 0.95;"> 
+            padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;">
+     <p style="margin: 0; font-size: 14px; opacity: 1;"> 
     💡 품종별, 상태별 시세를 비교하여 최적의 거래 시기를 파악해보세요.
     </p>
     </div>
@@ -631,12 +714,12 @@ def species_price():
     # -------------------------------------------------
     # ③ 해양데이터 연계 분석
     # -------------------------------------------------
-    st.subheader("③ 해양데이터 (수온 · 기온 · 풍속) 연계 분석")
+    st.subheader("③ 해양데이터 (수온 · 기온 · 풍속) 관계 분석")
     # 메인 설명 캡션 추가
     st.markdown("""
     <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
-            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
-    <p style="margin: 0; font-size: 15px; opacity: 0.95;"> 
+            padding: 8px; border-radius: 10px; color: white; margin-bottom: 10px;">
+    <p style="margin: 0; font-size: 14px; opacity: 1;"> 
     💡 해양 환경 데이터(수온, 기온, 풍속)와 시세의 상관관계를 알아보세요.
     </p>
     </div>
@@ -879,8 +962,12 @@ def species_price():
             </div>
             """, unsafe_allow_html=True)
 
-st.markdown("---")
-st.caption("📍 데이터 출처: 수산물유통정보시스템(FIPS) | 해양환경정보시스템")
+def show_source():
+    st.markdown("---")
+    st.caption("📍 데이터 출처: 수산물유통정보시스템(FIPS) | 해양환경정보시스템")
+
+# 앱 마지막에 호출
+show_source()
 
 
 # ============================================================

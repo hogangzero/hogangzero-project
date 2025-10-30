@@ -19,15 +19,16 @@ def main():
 
 
     st.sidebar.markdown("""
-    <div style='text-align: center; padding: 20px 0;'>
-        <h1 style='color: #667eea; margin: 0; font-size: 50px;'>호갱제로</h1>
-        <p style='color: #666; font-size: 16px; margin-top: 6px;'>
+    <div style='text-align: center; padding: 0px 0;'>
+        <h1 style='color: #667eea; margin: 0; font-size: 45px;'>호갱제로</h1>
+        <p style='color: #666; font-size: 13px; margin-top: 1px;'>
             투명한 수산 시장을 위한 AI 기반 데이터 분석 솔루션
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-
+    with st.sidebar: 
+        st.markdown('---')
     
     st.sidebar.title("")    
     choice = st.sidebar.selectbox('메뉴', menu)
