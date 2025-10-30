@@ -285,7 +285,7 @@ def species_price():
     with col2:
         if st.button("초기화", key="btn_reset_section1"):
             st.session_state.section1_show = False
-            st.experimental_rerun()
+            st.rerun()
 
     if st.session_state.section1_show:
         result = filter_by_species(df, '파일어종', species)
@@ -477,7 +477,7 @@ def species_price():
     with col4:
         if st.button("초기화", key="btn_reset_section2"):
             st.session_state.section2_show = False
-            st.experimental_rerun()
+            st.rerun()
 
     if st.session_state.section2_show:
         subset = df[df['파일어종'] == file_species]
@@ -734,7 +734,7 @@ def species_price():
     with col6:
         if st.button("초기화", key="btn_reset_section3"):
             st.session_state.section3_show = False
-            st.experimental_rerun()
+            st.rerun()
 
     if st.session_state.section3_show:
         try:
