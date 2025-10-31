@@ -21,7 +21,7 @@ def main():
     # 버튼 스타일 적용 CSS (key가 custom_chatbot_btn인 버튼 대상으로)
     st.markdown("""
     <style>
-    div.stButton > button[kind="secondary"] {
+    div.st-key-custom_chatbot_btn div.stButton > button[kind="secondary"] {
         width: 180px !important;
         height: 60px !important;
         font-size: 20px !important;
@@ -36,10 +36,10 @@ def main():
         bottom: 2%;
         z-index: 99999;
     }
-    div.stButton > button[kind="secondary"]:hover {
+    div.st-key-custom_chatbot_btn div.stButton > button[kind="secondary"]:hover {
         background: linear-gradient(90deg, #5a67d8, #556cd6) !important;
     }
-    div.stButton > button[kind="secondary"]:active {
+    div.st-key-custom_chatbot_btn div.stButton > button[kind="secondary"]:active {
         background: linear-gradient(90deg, #556cd6, #4a57b3) !important;
     }
     </style>
@@ -57,7 +57,7 @@ def main():
         float_box(
             """
             <div style='position: relative; width: 100%; height: 100%;'>
-                <button class='close' onclick="window.parent.postMessage('toggle_chatbot', '*')" 
+                <button onclick="window.parent.postMessage('toggle_chatbot', '*')" 
                     style='position: absolute; top: 10px; right: 0px; font-size: 24px; border: none; background: none; cursor: pointer;'>×</button>
                 <iframe src="https://app-gemini.streamlit.app/?embedded=true" width="100%" height="100%" frameborder="0" style="border-radius: 10px;"></iframe>
             </div>
