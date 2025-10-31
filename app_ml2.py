@@ -50,7 +50,7 @@ def _load_or_train_pipe(data_path, pipe_path):
 
 def run_ml2():
     st.set_page_config(
-        page_title="수산물 맞춤형 경락가 예측",
+        page_title="수산물 맞춤형 경매가 예측",
         page_icon="🎯",
         layout="wide"
     )
@@ -59,15 +59,17 @@ def run_ml2():
     st.markdown(
         "<div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); "
         "padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;'>"
-        "<h1 style='color: white; margin: 0;'>맞춤형 경락가 예측</h1>"
+        "<h1 style='color: white; margin: 0;'>맞춤형 경매가 예측</h1>"
         "<p style='color: white; margin: 5px 0; opacity: 0.95;'>AI 기반 수산물 거래 가격 예측 시스템</p>"
         "</div>",
         unsafe_allow_html=True,
     )
     
+    st.markdown('---')
+    
     st.markdown(
         "<div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); "
-        "padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;'>"
+        "padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>"
         "<p style='margin: 0; font-size: 15px; opacity: 0.95;'> "
         "💡 좌측 메뉴에서 어종과 거래 조건을 선택하세요." 
         "</p>"
@@ -133,7 +135,7 @@ def run_ml2():
             """, unsafe_allow_html=True)
 
     with st.container():
-        info_banner("💡 어종별 시세를 한눈에 알아보세요.")
+        st.subheader('거래 조건 목록')
 
         # 선택한 거래 조건 표 형식으로 표시
         st.markdown(f"""
@@ -143,31 +145,31 @@ def run_ml2():
                 <table style='width: 100%; border-collapse: separate; border-spacing: 0 10px;'>
                     <tr>
                         <td style='width: 30%; background: #f8f9fa; padding: 12px; border-radius: 8px;'>
-                            <span style='color: #666;'>🐟 어종</span>
+                            <span style='color: #666;'>어종</span>
                         </td>
                         <td style='padding: 12px; font-weight: 600; color: #1e3d59;'>{sel_file}</td>
                         <td style='width: 30%; background: #f8f9fa; padding: 12px; border-radius: 8px;'>
-                            <span style='color: #666;'>� 규격 등급</span>
+                            <span style='color: #666;'>규격 등급</span>
                         </td>
                         <td style='padding: 12px; font-weight: 600; color: #1e3d59;'>{sel_size}</td>
                     </tr>
                     <tr>
                         <td style='width: 30%; background: #f8f9fa; padding: 12px; border-radius: 8px;'>
-                            <span style='color: #666;'>🌍 원산지</span>
+                            <span style='color: #666;'>원산지</span>
                         </td>
                         <td style='padding: 12px; font-weight: 600; color: #1e3d59;'>{sel_area}</td>
                         <td style='width: 30%; background: #f8f9fa; padding: 12px; border-radius: 8px;'>
-                            <span style='color: #666;'>📦 포장 형태</span>
+                            <span style='color: #666;'>포장 형태</span>
                         </td>
                         <td style='padding: 12px; font-weight: 600; color: #1e3d59;'>{sel_pack}</td>
                     </tr>
                     <tr>
                         <td style='width: 30%; background: #f8f9fa; padding: 12px; border-radius: 8px;'>
-                            <span style='color: #666;'>🔢 수량</span>
+                            <span style='color: #666;'>수량</span>
                         </td>
                         <td style='padding: 12px; font-weight: 600; color: #1e3d59;'>{qty:.0f} 단위</td>
                         <td style='width: 30%; background: #f8f9fa; padding: 12px; border-radius: 8px;'>
-                            <span style='color: #666;'>⚖️ 중량</span>
+                            <span style='color: #666;'>중량</span>
                         </td>
                         <td style='padding: 12px; font-weight: 600; color: #1e3d59;'>{weight:.1f} kg</td>
                     </tr>
@@ -176,7 +178,7 @@ def run_ml2():
         """, unsafe_allow_html=True)
 
         # 예측 버튼 및 결과
-        if st.button('🔍 맞춤 가격 예측하기', key='predict', type='primary'):
+        if st.button(' 맞춤 가격 예측하기', key='predict', type='primary'):
             Xnew = pd.DataFrame([{
                 '파일어종': sel_file,
                 '산지_그룹화': sel_area,
@@ -202,7 +204,7 @@ def run_ml2():
                 st.markdown(f"""
                     <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
                                 padding: 15px; border-radius: 10px; color: white; margin: 20px 0;'>
-                        <h3 style='color: white; margin: 0;'>💰 예측 경락가</h3>
+                        <h3 style='color: white; margin: 0;'>💰 예측 경매가</h3>
                     </div>
                     <div style='background: white; padding: 25px; border-radius: 12px;
                                 border: 2px solid #e9ecef; box-shadow: 0 4px 12px rgba(0,0,0,0.08);'>
@@ -235,6 +237,8 @@ def run_ml2():
                 )
             except Exception as e:
                 st.error(f'예측 실패: {e}')
+
+        st.markdown('---')
 
         # AI 분석 정보 부분도 동일 스타일로
         info_banner("💡 AI 모델이 학습한 가격 영향 요인을 확인하세요.")

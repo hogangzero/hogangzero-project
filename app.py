@@ -102,12 +102,12 @@ def main():
     if choice == menu[0]:
         run_home()
     elif choice == menu[1]:
-        sub_choice = st.sidebar.selectbox('경락가', sub_menu)
+        sub_choice = st.sidebar.selectbox('경매가', sub_menu)
         if sub_choice == sub_menu[0] :
-            species_price() # 어종별 경락가
+            species_price() # 어종별 경매가
         elif sub_choice == sub_menu[1] :
             source_price()
-            source() # 산지별 경락가
+            source() # 산지별 경매가
             source_species()
         
     elif choice == menu[2]:
