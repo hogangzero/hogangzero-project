@@ -41,7 +41,7 @@ def _clean_price_series(s):
 
 
 def run_ml():
-    """수산물 경락가 예측 시스템
+    """수산물 경매가 예측 시스템
 
     수산물 도매 거래를 위한 가격 동향 분석 및 예측 도구입니다.
     시장 가격 예측을 통해 효율적인 구매 계획을 수립할 수 있습니다.
@@ -49,7 +49,7 @@ def run_ml():
     
     # 페이지 기본 설정
     st.set_page_config(
-        page_title="수산물 경락가 예측 시스템",
+        page_title="수산물 경매가 예측 시스템",
         page_icon="🐟",
         layout="wide"
     )
@@ -59,22 +59,22 @@ def run_ml():
         "<div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); "
         "padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;'>"
         "<h1 style='color: white; margin: 0;'>날짜별 가격 예측</h1>"
-        "<p style='color: white; margin: 5px 0; opacity: 0.95;'>Prophet 모델을 이용한 월별 예측</p>"
+        "<p style='color: white; margin: 5px 0; opacity: 0.95;'>AI 기반 수산물 거래 가격 예측 시스템</p>"
         "</div>",
         unsafe_allow_html=True,
     )
     
-    # 안내 메시지
-    st.markdown(
-        "<div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); "
-        "padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>"
-        "<p style='margin: 0; font-size: 15px; opacity: 0.95;'> "
-        "💡 좌측 사이드바에서 어종과 예측 기간을 설정하세요." 
-        "</p>"
-        "</div>",
-        unsafe_allow_html=True,
-    )
+    st.markdown('---')
 
+    # 안내 메시지
+    st.markdown("""
+    <div style='text-align: center; color: #666; margin-bottom: 7px;
+                background: #f8f9fa; padding: 15px; border-radius: 10px;'>
+        <p style='margin: 0; font-size: 1.4em; line-height: 1.5;'>
+            좌측 사이드바에서 어종과 예측 기간을 설정하세요
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     st.markdown('---')
 
     data_path = os.path.join('data', '수산물_통합전처리_3컬럼.csv')
@@ -103,7 +103,7 @@ def run_ml():
         st.sidebar.header('상세 검색하기')
         
         # 어종 선택
-        st.markdown("##### 🐟 어종 선택")
+        st.markdown("## 어종 선택")
         species_list = sorted(df['파일어종'].dropna().unique())
         species = st.selectbox(
             '분석할 어종을 선택하세요',
@@ -111,9 +111,9 @@ def run_ml():
             help="가격을 예측하고 싶은 어종을 선택하세요"
         )
         
-        st.markdown("##### 📅 기간 설정")
+        st.markdown("## 기간 설정")
         years_to_forecast = st.slider(
-            '예측 기간',
+            '예측 연도를 설정하세요',
             min_value=1,
             max_value=5,
             value=2,
@@ -123,7 +123,7 @@ def run_ml():
 
         months_with_label = [f"{m}월" for m in range(1, 13)]
         months_to_show = st.multiselect(
-            '주요 거래월 선택',
+            '주요 거래월을 선택하세요',
             options=months_with_label,
             default=["3월", "6월", "9월", "12월"],
             help="중점적으로 보고 싶은 월을 선택하세요"
@@ -137,7 +137,7 @@ def run_ml():
             
         # 거래 팁 제공
         st.markdown("---")
-        with st.expander("💡 거래 전략 팁"):
+        with st.expander("💡  거래 전략 팁"):
             st.markdown("""
             - **분기별 가격 변동**: 3,6,9,12월의 가격 변화를 주목하세요
             - **계절성 고려**: 어종별 성수기/비수기를 참고하세요
@@ -155,6 +155,7 @@ def run_ml():
     if df_sp.empty:
         st.warning('선택한 어종에 대한 데이터가 없습니다.')
         return
+        
 
     df_sp.set_index('date', inplace=True)
     monthly = df_sp['평균가'].resample('M').mean().reset_index()
@@ -163,23 +164,23 @@ def run_ml():
 
 
     # 최근 시장 동향 표시 - 스타일 변경
-    st.subheader('① 최근 시장 동향')
+    st.subheader('① 최근 시장 경매가')
     st.markdown(f"""
         <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
                     padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>
             <p style='margin: 5px 0 0 0; font-size: 14px; opacity: 0.95;'>
-                💡 {species}의 최근 12개월 거래 데이터 (총 {len(monthly):,}개 거래 기록 분석) 입니다.
+                💡  {species}의 최근 12개월 거래 데이터 분석입니다.
             </p>
         </div>
     """, unsafe_allow_html=True)
 
 
     # 최근 12개월 데이터를 보기 좋게 표시
-    with st.expander("최근 12개월 시세 데이터"):
+    with st.expander("최근 12개월 시세 보기"):
         recent_data = monthly.tail(12).copy()
         recent_data['ds'] = recent_data['ds'].dt.strftime('%Y년 %m월')
-        recent_data = recent_data.rename(columns={'ds': '거래월', 'y': '평균 경락가(원)'})
-        recent_data['평균 경락가(원)'] = recent_data['평균 경락가(원)'].apply(lambda x: f'{x:,.0f}')
+        recent_data = recent_data.rename(columns={'ds': '거래월', 'y': '평균 경매가(원)'})
+        recent_data['평균 경매가(원)'] = recent_data['평균 경매가(원)'].apply(lambda x: f'{x:,.0f}')
         st.dataframe(recent_data, hide_index=True)
 
 
@@ -199,19 +200,20 @@ def run_ml():
             try:
                 model.fit(monthly)
                 joblib.dump(model, model_file)
-                st.success('✨ 데이터 분석이 완료되었습니다!')
+                st.success(' 데이터 분석이 완료되었습니다!')
             except Exception as e:
-                st.error('😓 분석 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.')
+                st.error(' 분석 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.')
                 return
 
+    st.markdown('---')
 
     # 상세 데이터 및 다운로드 섹션 - 스타일 변경
-    st.subheader('②  가격 예측')
+    st.subheader('② 경매가 예측하기')
     st.markdown("""
         <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
                     padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>
             <p style='margin: 5px 0 0 0; font-size: 14px; opacity: 0.95;'>
-                💡 월별 시세 예측을 확인하세요.
+                💡  월별 경매 시세 예측을 확인하세요.
             </p>
         </div>
     """, unsafe_allow_html=True)
@@ -225,7 +227,7 @@ def run_ml():
     forecast_monthly['ds'] = pd.to_datetime(forecast_monthly['ds']).dt.to_period('M').dt.to_timestamp()
 
     # 데이터 테이블 표시
-    with st.expander("월별 시세 예측 데이터"):
+    with st.expander("월별 예측 시세 보기"):
         formatted_data = forecast_monthly.tail(months).copy()
         formatted_data['ds'] = formatted_data['ds'].dt.strftime('%Y년 %m월')
         formatted_data.columns = ['거래월', '예측가격', '최소예상가격', '최대예상가격']
@@ -238,12 +240,12 @@ def run_ml():
     st.markdown('---')
 
     # 예측 결과 시각화 - Plotly 인터랙티브 차트
-    st.subheader('② 전체 가격 동향 예측')
+    st.subheader('② 예측 시세 그래프 보기')
     st.markdown("""
         <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
                     padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>
             <p style='margin: 5px 0 0 0; font-size: 14px; opacity: 0.95;'>
-                💡 실제 거래가 , 예측 가격 , 신뢰 구간  (마우스 오버로 상세 정보 확인하세요.)
+                💡  (실제 거래가 , 예측 가격 , 신뢰 구간) 상세 정보를 확인하세요.
             </p>
         </div>
     """, unsafe_allow_html=True)
@@ -320,7 +322,7 @@ def run_ml():
     # 레이아웃 설정 - 가독성 개선 (모든 글씨 검정색)
     fig_plotly.update_layout(
     title={
-        'text': f'<b>{species}</b> 경락가 동향 및 예측',
+        'text': f'<b>{species}</b> 경매가 동향 및 예측',
         'font': {'size': 22, 'color': '#000000', 'family': 'Arial Black'},  # 검정색
         'x': 0.5,
         'xanchor': 'center'
@@ -337,7 +339,7 @@ def run_ml():
         linewidth=2
     ),
     yaxis=dict(
-        title='경락가 (원)',
+        title='경매가 (원)',
         showgrid=True,
         gridcolor='rgba(150, 150, 150, 0.3)',
         gridwidth=1,
@@ -377,12 +379,12 @@ def run_ml():
     st.markdown('---')
 
     # 주요 거래월 예측 결과 - 스타일 변경
-    st.subheader('③ 주요 거래월 예상 경락가')
+    st.subheader('③ 주요 거래월 예상 경매가')
     st.markdown("""
         <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
                     padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>
             <p style='margin: 5px 0 0 0; font-size: 14px; opacity: 0.95;'>
-                💡 선택하신 주요 거래월의 예상 경락가와 변동 범위입니다
+                💡  선택하신 주요 거래월의 예상 경매가와 변동 범위입니다
             </p>
         </div>
     """, unsafe_allow_html=True)
@@ -403,7 +405,7 @@ def run_ml():
             <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                         padding: 10px 20px; border-radius: 8px; margin: 30px 0 10px 0;'>
                 <h4 style='color: white; margin: 0; font-weight: 600;'>
-                    {year}년 예상 경락가
+                    {year}년 예상 경매가
                 </h4>
             </div>
         """, unsafe_allow_html=True)

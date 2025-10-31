@@ -11,7 +11,7 @@
 
 # # ----- ML 예측 챗봇 함수 -----
 # def ml_predict_section():
-#     st.header("경락가 예측 챗봇")
+#     st.header("경매가 예측 챗봇")
 #     question = st.text_input("질문을 입력하세요 (예: 2025년 1월 제주도산 갈치 평균가를 예측해줘)", key="ml_question")
 #     @st.cache_resource
 #     def prepare():

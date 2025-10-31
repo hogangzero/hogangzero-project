@@ -122,33 +122,34 @@ def run_home():
     st.markdown("<br>", unsafe_allow_html=True)
 
     # 사용 방법 안내 (접을 수 있는 형태)
-    with st.expander("💡 대시보드 사용 가이드"):
+    with st.expander("💡 호갱제로 사용 가이드"):
         st.markdown("""
-        ### 📌 이렇게 활용하세요
+        ###  이렇게 활용하세요
+        ####
         
         **1️⃣ 어종별 시세 분석**
-        - 관심 어종을 선택하여 일별 가격 변동 추이를 확인
-        - 평균가, 최고가, 최저가를 비교하여 거래 시기 결정
-        - 품종 및 상태별(활어/냉동/선어) 가격 차이 분석
+        - 관심 어종을 선택하여 일별 가격 변동 추이를 확인할 수 있습니다.
+        - 평균가, 최고가, 최저가를 비교하여 거래 시기를 결정해 보세요.
+        - 품종 및 상태별(활어/냉동/선어) 가격 차이 분석이 가능합니다.
         
         **2️⃣ 산지별 시세 비교**
-        - 특정 산지의 전체 어종 평균 가격 조회
-        - 거래량 Top 10 어종의 산지별 가격 비교
-        - 월별 가격 추이를 확인하여 최적의 거래처 선정
+        - 특정 산지의 전체 어종 평균 가격 조회 할 수 있습니다.
+        - 거래량 Top 10 어종의 산지별 가격을 알아볼 수 있습니다.
+        - 월별 가격 추이를 확인하여 최적의 거래처를 선정해보세요.
         
         **3️⃣ AI 챗봇 활용**
-        - Google API 기반 실시간 시세 조회
-        - RAG 기반 수산물 유통, 보관, 품질 관리 전문 정보
-        - 24시간 언제든지 궁금한 사항 문의 가능
+        - Google API 기반 실시간 시세 조회를 이용해 보세요.
+        - RAG 기반 챗봇을 통해 저희 호갱제로 사용법을 쉽게 알아보세요.
+        - 24시간 언제든지 궁금한 사항 문의해주세요.
         
         **4️⃣ 제철 어종 확인**
-        - 월별 가격이 가장 저렴한 제철 어종 추천
-        - 계절별 최적의 구매 시기 파악
+        - 월별 가격이 가장 저렴한 제철 어종을 추천해드립니다.
+        - 계절별 최적의 구매 시기를 파악해 보세요.
         
         ---
         
-        📍 **데이터 출처**: 수산물유통정보시스템(FIPS) | 해양환경정보시스템  
-        📅 **사용된 데이터 기간**: 2021년 ~ 2024년
+         **데이터 출처**: 수산물유통정보시스템(FIPS) | 해양환경정보시스템  
+         **사용된 데이터 기간**: 2021년 ~ 2024년
         """)
     
     st.markdown("---")
@@ -171,7 +172,7 @@ def run_home():
                 margin-left: auto; margin-right: auto;'>
         <h2 style='color: #2c3e50; margin: 0; font-size: 2.2em;
                    font-weight: 900; text-align: center;'>
-            AI 챗봇
+            AI 챗봇 기능 
         </h2>
     </div>
     """, unsafe_allow_html=True)
@@ -435,23 +436,15 @@ def run_home():
 
     # 월별 추천 카드 표시
     cols = st.columns(3)
-    
-    # 월별 라벨 색상
-    month_colors = {
-        prev_month: "#5a67d8",  # 보라
-        this_month: "#48bb78",  # 초록
-        next_month: "#ed8936"   # 오렌지
-    }
 
     for i, month in enumerate(target_months):
-        header_color = month_colors[month]
-        
         with cols[i]:
             st.markdown(f"""
-            <div style='background: {header_color};
+            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                         padding: 18px 0; border-radius: 12px; margin-bottom: 15px;
-                        text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,0.12);'>
-                <h4 style='color: white; margin: 0; font-size: 1.4em; font-weight: 600;'>
+                        text-align: center; box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);'>
+                <h4 style='color: white; margin: 0; font-size: 1.4em; font-weight: 600;
+                           text-align: center;'>
                     {months_korean[month]}
                 </h4>
             </div>
@@ -464,14 +457,14 @@ def run_home():
                     st.markdown(f"""
                     <div style='background: white;
                                 padding: 16px 22px; margin: 8px 0;
-                                border-radius: 10px; border-left: 4px solid {header_color};
+                                border-radius: 10px; border-left: 4px solid #667eea;
                                 box-shadow: 0 2px 6px rgba(0,0,0,0.06);
                                 display: flex; justify-content: space-between;
                                 align-items: center;'>
                         <span style='font-size: 1em; color: #2c3e50; font-weight: 500;'>
                             {row['species']}
                         </span>
-                        <span style='font-size: 1.05em; font-weight: 700; color: {header_color};'>
+                        <span style='font-size: 1.05em; font-weight: 700; color: #667eea;'>
                             {row['avg_price']:,.0f}원
                         </span>
                     </div>
@@ -481,7 +474,7 @@ def run_home():
                 <div style='background: #f8f9fa; padding: 15px;
                             border-radius: 10px; text-align: center;
                             color: #999; font-size: 0.95em;'>
-                    제철 어종이 없습니다
+                    추천 어종이 없습니다.
                 </div>
                 """, unsafe_allow_html=True)
 
