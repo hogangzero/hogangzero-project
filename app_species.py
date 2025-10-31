@@ -80,37 +80,94 @@ def filter_by_species(df, species_col, species_name, min_count=100):
 # 가격 시각화 함수
 # ============================================================
 
-def plot_metrics(df, metrics, title, step=DATE_TICK_STEP):
-    """날짜별 가격 변화를 선 그래프로 시각화"""
-    if df is None or df.empty:
+def plot_metrics(dfs, metrics, titles, step=DATE_TICK_STEP):
+    """날짜별 가격 변화를 선 그래프로 시각화 (여러 데이터프레임 비교)"""
+    if not isinstance(dfs, list):
+        dfs = [dfs]
+        titles = [titles]
+
+    if any(df is None or df.empty for df in dfs):
         st.warning("시각화할 데이터가 없습니다.")
         return
 
-    fig, ax = plt.subplots(figsize=(10, 5))
-    colors = {'평균가': 'tab:blue', '낙찰고가': 'tab:orange', '낙찰저가': 'tab:green'}
+    fig, ax = plt.subplots(figsize=(12, 6))
+    colors = {'평균가': ['tab:blue', 'tab:red'], '낙찰고가': ['tab:orange', 'darkred'], '낙찰저가': ['tab:green', 'darkgreen']}
+    line_styles = ['-', '--']  # 서로 다른 품종을 구분하기 위한 선 스타일
 
-    for metric in metrics:
-        if metric in df.columns:
-            ax.plot(df.index, df[metric], label=metric, color=colors.get(metric),
-                    marker='o', linewidth=2)
+    # 모든 데이터프레임의 날짜 범위를 통합
+    all_dates = sorted(set().union(*[df.index for df in dfs]))
+    
+    for df_idx, (df, title) in enumerate(zip(dfs, titles)):
+        for metric in metrics:
+            if metric in df.columns:
+                ax.plot(df.index, df[metric], 
+                       label=f"{title} - {metric}",
+                       color=colors[metric][df_idx % len(colors[metric])],
+                       linestyle=line_styles[df_idx % len(line_styles)],
+                       marker='o' if df_idx == 0 else 's',
+                       linewidth=2)
 
-    ax.set_title(title)
+    ax.set_title("품종별 가격 비교" if len(dfs) > 1 else titles[0])
     ax.set_xlabel('날짜')
     ax.set_ylabel('가격 (원)')
-    ax.legend()
-
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    
     # X축 날짜 간격 설정
-    x_vals = list(df.index)
     step = max(1, step)
-    ax.set_xticks(x_vals[::step])
-    ax.set_xticklabels([x.strftime('%Y-%m') for x in x_vals[::step]], rotation=45)
+    ax.set_xticks(all_dates[::step])
+    ax.set_xticklabels([d.strftime('%Y-%m') for d in all_dates[::step]], rotation=45)
 
+    plt.tight_layout()
     st.pyplot(fig)
 
 
 # ============================================================
 # 해양데이터 연계 시각화 함수
 # ============================================================
+
+def calculate_species_correlations(df, ocean_df, market):
+    """모든 어종에 대한 환경 변수와의 상관관계 계산"""
+    correlations = {}
+    ocean_selected = ocean_df[ocean_df['산지'] == market]
+    
+    for species in df['파일어종'].unique():
+        species_monthly = (
+            df[df['파일어종'] == species]
+            .groupby(['year', 'month'])[['평균가']]
+            .mean()
+            .round(0)
+            .reset_index()
+        )
+        
+        merged = pd.merge(species_monthly, ocean_selected[['year', 'month', '기온 평균', '수온 평균', '풍속 평균']], 
+                         on=['year', 'month'], how='inner')
+        
+        if len(merged) > 0:
+            correlations[species] = {
+                '수온': merged['평균가'].corr(merged['수온 평균']),
+                '기온': merged['평균가'].corr(merged['기온 평균']),
+                '풍속': merged['평균가'].corr(merged['풍속 평균'])
+            }
+    
+    return correlations
+
+def get_most_affected_species(correlations):
+    """각 환경 변수별로 가장 영향을 많이 받는 어종 찾기"""
+    most_affected = {
+        '수온': {'species': '', 'correlation': 0},
+        '기온': {'species': '', 'correlation': 0},
+        '풍속': {'species': '', 'correlation': 0}
+    }
+    
+    for species, corr_values in correlations.items():
+        for var in ['수온', '기온', '풍속']:
+            if abs(corr_values[var]) > abs(most_affected[var]['correlation']):
+                most_affected[var] = {
+                    'species': species,
+                    'correlation': corr_values[var]
+                }
+    
+    return most_affected
 
 def plot_ocean_metrics(merged, ocean_vars, selected_market, selected_file_species, step=DATE_TICK_STEP):
     """월별 평균가 vs 해양데이터 (이중 축 시각화)"""
@@ -300,154 +357,157 @@ def species_price():
             st.markdown('---')
             selected_metrics = st.multiselect(
                 "가격 항목을 선택하세요 ~", ['평균가', '낙찰고가', '낙찰저가'], default=['평균가'])
-            plot_metrics(result, selected_metrics, f"{species} 가격 추이")
-            # ==================== 메트릭 카드 섹션 ====================
-        st.markdown("---")
-        
-
-        # 계산
-        avg_price = result['평균가'].mean()
-        max_price = result['낙찰고가'].max()
-        min_price = result['낙찰저가'].min()
-        price_range = max_price - min_price
-        price_volatility = (result['평균가'].std() / avg_price * 100)
-        
-        # 데이터 기간
-        date_range = (result.index.max() - result.index.min()).days
-        
-        # 최근 트렌드 (최근 30일 vs 이전 30일)
-        if len(result) > 60:
-            recent_30 = result.tail(30)['평균가'].mean()
-            previous_30 = result.iloc[-60:-30]['평균가'].mean()
-            trend_change = ((recent_30 - previous_30) / previous_30 * 100)
-        elif len(result) > 30:
-            recent_30 = result.tail(30)['평균가'].mean()
-            trend_change = ((recent_30 - avg_price) / avg_price * 100)
-        else:
-            recent_30 = avg_price
-            trend_change = 0
-        
-        # 4개 메트릭 카드
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            st.metric(
-                label="평균 경락가",
-                value=f"{avg_price:,.0f}원",
-                delta=f"{trend_change:+.1f}% (최근 추세)"
-            )
-        
-        with col2:
-            st.metric(
-                label="최고 낙찰가",
-                value=f"{max_price:,.0f}원",
-                delta=f"+{((max_price - avg_price) / avg_price * 100):.1f}%",
-                delta_color="off"
-            )
-        
-        with col3:
-            st.metric(
-                label="최저 낙찰가",
-                value=f"{min_price:,.0f}원",
-                delta=f"{((min_price - avg_price) / avg_price * 100):.1f}%",
-                delta_color="off"
-            )
-        
-        with col4:
-            st.metric(
-                label="가격 변동폭",
-                value=f"{price_range:,.0f}원",
-                delta=f"변동률 {price_volatility:.1f}%"
-            )
-
-        st.markdown('---')
-        
-        # ==================== 인사이트 카드 섹션 ====================
-        
-        col_i1, col_i2, col_i3 = st.columns(3)
-        
-        with col_i1:
-            # 가격 트렌드 분석
-            if trend_change > 5:
-                trend_text = "강한 상승세"
-                trend_emoji = ""
-                trend_desc = "가격이 지속적으로 상승 중입니다"
-                trend_color = "#e74c3c"
-            elif trend_change > 2:
-                trend_text = "완만한 상승"
-                trend_emoji = ""
-                trend_desc = "가격이 소폭 상승하고 있습니다"
-                trend_color = "#e67e22"
-            elif trend_change < -5:
-                trend_text = "급격한 하락"
-                trend_emoji = ""
-                trend_desc = "가격이 빠르게 하락하고 있습니다"
-                trend_color = "#2ecc71"
-            elif trend_change < -2:
-                trend_text = "완만한 하락"
-                trend_emoji = ""
-                trend_desc = "가격이 소폭 하락하고 있습니다"
-                trend_color = "#27ae60"
+            if selected_metrics is None or len(selected_metrics) == 0:
+                st.warning("하나 이상의 가격 항목을 선택해주세요.")
             else:
-                trend_text = "안정 유지"
-                trend_emoji = ""
-                trend_desc = "가격이 안정적으로 유지되고 있습니다"
-                trend_color = "#3498db"
-            
-            st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
-            padding: 15px; border-radius: 10px; color: white; margin-bottom: 20px;">
-            <p style="margin: 0; font-size: 15px; opacity: 0.95;"> 
-                <h4>{trend_emoji} 가격 추세</h4>
-                <p style="font-size: 12px; line-height: 1.5;">
-                <b style="color: {trend_color};">{trend_text}</b><br/>
-                {trend_desc}
-                </p>
-                <p style="font-size: 12px; margin-top: 10px; opacity: 0.9;">
-                변화율: {abs(trend_change):.1f}%<br/>
-                최근 평균: {recent_30:,.0f}원
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col_i2:
-            # 변동성 및 안정성 분석
-            if price_volatility > 25:
-                volatility_level = "매우 높음"
-                volatility_desc = "가격 예측이 어려운 고위험 구간"
-                vol_emoji = ""
-                vol_color = "#e74c3c"
-            elif price_volatility > 15:
-                volatility_level = "높음"
-                volatility_desc = "변동이 크므로 거래 타이밍 중요"
-                vol_emoji = ""
-                vol_color = "#f39c12"
-            elif price_volatility > 8:
-                volatility_level = "보통"
-                volatility_desc = "적정 수준의 가격 변동"
-                vol_emoji = ""
-                vol_color = "#3498db"
-            else:
-                volatility_level = "낮음"
-                volatility_desc = "안정적인 가격 형성"
-                vol_emoji = ""
-                vol_color = "#2ecc71"
-            
-            st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                        padding: 10px; border-radius: 10px; color: white; height: 180px;">
-                <h4>{vol_emoji} 가격 변동성</h4>
-                <p style="font-size: 12px; line-height: 1.5;">
-                변동성: <b style="color: {vol_color};">{volatility_level}</b><br/>
-                {volatility_desc}
-                </p>
-                <p style="font-size: 12px; margin-top: 1px; opacity: 1.5;">
-                변동계수: {price_volatility:.1f}%<br/>
-                가격 범위: {price_range:,.0f}원
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-            
+                plot_metrics(result, selected_metrics, f"{species} 가격 추이")
+                # ==================== 메트릭 카드 섹션 ====================
+                st.markdown("---")
+                
+
+                # 계산
+                avg_price = result['평균가'].mean()
+                max_price = result['낙찰고가'].max()
+                min_price = result['낙찰저가'].min()
+                price_range = max_price - min_price
+                price_volatility = (result['평균가'].std() / avg_price * 100)
+                
+                # 데이터 기간
+                date_range = (result.index.max() - result.index.min()).days
+                
+                # 최근 트렌드 (최근 30일 vs 이전 30일)
+                if len(result) > 60:
+                    recent_30 = result.tail(30)['평균가'].mean()
+                    previous_30 = result.iloc[-60:-30]['평균가'].mean()
+                    trend_change = ((recent_30 - previous_30) / previous_30 * 100)
+                elif len(result) > 30:
+                    recent_30 = result.tail(30)['평균가'].mean()
+                    trend_change = ((recent_30 - avg_price) / avg_price * 100)
+                else:
+                    recent_30 = avg_price
+                    trend_change = 0
+                
+                # 4개 메트릭 카드
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    st.metric(
+                        label="평균 경락가",
+                        value=f"{avg_price:,.0f}원",
+                        delta=f"{trend_change:+.1f}% (최근 추세)"
+                    )
+                
+                with col2:
+                    st.metric(
+                        label="최고 낙찰가",
+                        value=f"{max_price:,.0f}원",
+                        delta=f"+{((max_price - avg_price) / avg_price * 100):.1f}%",
+                        delta_color="off"
+                    )
+                
+                with col3:
+                    st.metric(
+                        label="최저 낙찰가",
+                        value=f"{min_price:,.0f}원",
+                        delta=f"{((min_price - avg_price) / avg_price * 100):.1f}%",
+                        delta_color="off"
+                    )
+                
+                with col4:
+                    st.metric(
+                        label="가격 변동폭",
+                        value=f"{price_range:,.0f}원",
+                        delta=f"변동률 {price_volatility:.1f}%"
+                    )
+
+                st.markdown('---')
+                
+                # ==================== 인사이트 카드 섹션 ====================
+                
+                col_i1, col_i2, col_i3 = st.columns(3)
+                
+                with col_i1:
+                    # 가격 트렌드 분석
+                    if trend_change > 5:
+                        trend_text = "강한 상승세"
+                        trend_emoji = ""
+                        trend_desc = "가격이 지속적으로 상승 중입니다"
+                        trend_color = "#e74c3c"
+                    elif trend_change > 2:
+                        trend_text = "완만한 상승"
+                        trend_emoji = ""
+                        trend_desc = "가격이 소폭 상승하고 있습니다"
+                        trend_color = "#e67e22"
+                    elif trend_change < -5:
+                        trend_text = "급격한 하락"
+                        trend_emoji = ""
+                        trend_desc = "가격이 빠르게 하락하고 있습니다"
+                        trend_color = "#2ecc71"
+                    elif trend_change < -2:
+                        trend_text = "완만한 하락"
+                        trend_emoji = ""
+                        trend_desc = "가격이 소폭 하락하고 있습니다"
+                        trend_color = "#27ae60"
+                    else:
+                        trend_text = "안정 유지"
+                        trend_emoji = ""
+                        trend_desc = "가격이 안정적으로 유지되고 있습니다"
+                        trend_color = "#3498db"
+                    
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                padding: 10px; border-radius: 10px; color: white; height: 180px;">
+                    <p style="margin: 0; font-size: 15px; opacity: 0.95;"> 
+                        <h4>{trend_emoji} 가격 추세</h4>
+                        <p style="font-size: 12px; line-height: 1.5;">
+                        <b style="color: {trend_color};">{trend_text}</b><br/>
+                        {trend_desc}
+                        </p>
+                        <p style="font-size: 12px; margin-top: 10px; opacity: 0.9;">
+                        변화율: {abs(trend_change):.1f}%<br/>
+                        최근 평균: {recent_30:,.0f}원
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                with col_i2:
+                    # 변동성 및 안정성 분석
+                    if price_volatility > 25:
+                        volatility_level = "매우 높음"
+                        volatility_desc = "가격 예측이 어려운 고위험 구간"
+                        vol_emoji = ""
+                        vol_color = "#e74c3c"
+                    elif price_volatility > 15:
+                        volatility_level = "높음"
+                        volatility_desc = "변동이 크므로 거래 타이밍 중요"
+                        vol_emoji = ""
+                        vol_color = "#f39c12"
+                    elif price_volatility > 8:
+                        volatility_level = "보통"
+                        volatility_desc = "적정 수준의 가격 변동"
+                        vol_emoji = ""
+                        vol_color = "#3498db"
+                    else:
+                        volatility_level = "낮음"
+                        volatility_desc = "안정적인 가격 형성"
+                        vol_emoji = ""
+                        vol_color = "#2ecc71"
+                    
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                padding: 10px; border-radius: 10px; color: white; height: 180px;">
+                        <h4>{vol_emoji} 가격 변동성</h4>
+                        <p style="font-size: 12px; line-height: 1.5;">
+                        변동성: <b style="color: {vol_color};">{volatility_level}</b><br/>
+                        {volatility_desc}
+                        </p>
+                        <p style="font-size: 12px; margin-top: 1px; opacity: 1.5;">
+                        변동계수: {price_volatility:.1f}%<br/>
+                        가격 범위: {price_range:,.0f}원
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
 
     # -------------------------------------------------
     # ② 파일어종 및 세부 어종별 낙찰가 비교
@@ -510,203 +570,236 @@ def species_price():
             col_species, col_state = st.columns([2.5, 1.5])
 
             with col_species:
-                selected_pure_species = st.selectbox(
-                    "품종 선택", pure_species_list,
-                    key="pure_species_select", label_visibility="collapsed"
+                selected_pure_species_list = st.multiselect(
+                    "품종 선택 (최대 2개)", pure_species_list,
+                    key="pure_species_select", 
+                    max_selections=2,
+                    label_visibility="collapsed"
                 )
             
-            available_states = sorted(species_info[selected_pure_species])
-            
-            # 줄임말 → 풀네임으로 변환하여 라디오 버튼이나 메시지에 표시
-            available_states_full = [state_fullname_map.get(s, s) for s in available_states]
+            if not selected_pure_species_list:
+                st.warning("하나 이상의 품종을 선택해주세요.")
+    
+            species_list = []
+            for selected_pure_species in selected_pure_species_list:
+                available_states = sorted(species_info[selected_pure_species])
+                available_states_full = [state_fullname_map.get(s, s) for s in available_states]
 
-            if len(available_states) == 1:
-                selected_state_full = available_states_full[0]
-                st.info(f"이 품종은 '{selected_state_full}' 상태의 데이터만 있습니다.")
-            else:
-                selected_state_full = st.radio(
-                    "상태를 선택하세요", available_states_full,
-                    horizontal=True, key="radio_state_section2"
-                )
+                # 품종별로 상태 선택
+                st.markdown(f"**{selected_pure_species}** 상태 선택:")
+                if len(available_states) == 1:
+                    selected_state_full = available_states_full[0]
+                    st.info(f"'{selected_pure_species}'는 '{selected_state_full}' 상태의 데이터만 있습니다.")
+                else:
+                    selected_state_full = st.radio(
+                        f"{selected_pure_species}의 상태를 선택하세요",
+                        available_states_full,
+                        horizontal=True,
+                        key=f"radio_state_section2_{selected_pure_species}"
+                    )
 
-            # 풀네임으로부터 다시 줄임말 상태 코드 구함
-            selected_state = state_shortname_map.get(selected_state_full, selected_state_full)
+                selected_state = state_shortname_map.get(selected_state_full, selected_state_full)
+                species_list.append(f"({selected_state}){selected_pure_species}")
 
-            # 완성된 어종명 생성 (기존 포맷 유지)
-            species = f"({selected_state}){selected_pure_species}"
+            species = species_list
 
         else:
             st.warning("분류 가능한 품종이 없습니다.")
             st.stop()
 
                 
-        if species:
-            result = filter_by_species(subset, '어종', species)
-            if result is not None:
-                # 표시용 데이터프레임 생성
-                display_df = result.reset_index()
-                display_df['date'] = display_df['date'].dt.strftime('%Y-%m-%d')
-                display_df = display_df.rename(columns={'date': '기준날짜'})
-                # 인덱스 리셋 후 표시
-                display_df = display_df.reset_index(drop=True)
-                st.dataframe(display_df)
-                plot_metrics(result, ['평균가', '낙찰고가', '낙찰저가'], f"{species} 낙찰가 시계열")
-                            # ==================== 메트릭 카드 섹션 ====================
+        show_analysis = True
+        if not selected_pure_species_list:
+            show_analysis = False
+        
+        if show_analysis and species_list:
+            results = []
+            display_dfs = []
+            
+            for species_name in species_list:
+                result = filter_by_species(subset, '어종', species_name)
+                if result is not None:
+                    results.append(result)
+                    # 표시용 데이터프레임 생성
+                    display_df = result.reset_index()
+                    display_df['date'] = display_df['date'].dt.strftime('%Y-%m-%d')
+                    display_df = display_df.rename(columns={'date': '기준날짜'})
+                    display_df['품종'] = species_name  # 품종 정보 추가
+                    display_dfs.append(display_df)
+            
+            if display_dfs:
+                # 모든 데이터프레임 통합하여 표시
+                combined_df = pd.concat(display_dfs, ignore_index=True)
+                st.dataframe(combined_df)
+                
+                # 그래프 표시
+                # 여러 품종을 비교할 때는 가독성 문제로 평균가만 표시
+                if len(results) > 1:
+                    metrics_to_plot = ['평균가']
+                    st.info("여러 품종을 비교할 때는 '평균가'만 표시됩니다.")
+                else:
+                    metrics_to_plot = ['평균가', '낙찰고가', '낙찰저가']
+
+                plot_metrics(results, metrics_to_plot, species_list)
+
             st.markdown("---")
-            
-            # 계산
-            avg_price = result['평균가'].mean()
-            max_price = result['낙찰고가'].max()
-            min_price = result['낙찰저가'].min()
-            price_range = max_price - min_price
-            price_volatility = (result['평균가'].std() / avg_price * 100)
-            
-            # 최근 트렌드 (최근 30일 vs 전체 평균)
-            if len(result) > 30:
-                recent_avg = result.tail(30)['평균가'].mean()
-                trend_change = ((recent_avg - avg_price) / avg_price * 100)
-            else:
-                recent_avg = avg_price
-                trend_change = 0
-            
-            # 4개 메트릭 카드
-            col1, col2, col3, col4 = st.columns(4)
-            
-            with col1:
-                st.metric(
-                    label="평균 경락가",
-                    value=f"{avg_price:,.0f}원",
-                    delta=f"{trend_change:+.1f}% (최근 30일)"
-                )
-            
-            with col2:
-                st.metric(
-                    label="최고 낙찰가",
-                    value=f"{max_price:,.0f}원",
-                    delta=f"+{((max_price - avg_price) / avg_price * 100):.1f}%",
-                    delta_color="off"
-                )
-            
-            with col3:
-                st.metric(
-                    label="최저 낙찰가",
-                    value=f"{min_price:,.0f}원",
-                    delta=f"{((min_price - avg_price) / avg_price * 100):.1f}%",
-                    delta_color="off"
-                )
-            
-            with col4:
-                st.metric(
-                    label="가격 변동성",
-                    value=f"{price_volatility:.1f}%",
-                    delta=f"범위 {price_range:,.0f}원"
-                )
 
-            st.markdown('---')
-            
-            # ==================== 인사이트 카드 섹션 ====================
-            
-            col_i1, col_i2, col_i3 = st.columns(3)
-            
-            with col_i1:
-                # 가격 트렌드 분석
-                if trend_change > 5:
-                    trend_text = "상승 추세"
-                    trend_emoji = ""
-                    trend_color = "#e74c3c"
-                elif trend_change < -5:
-                    trend_text = "하락 추세"
-                    trend_emoji = ""
-                    trend_color = "#2ecc71"
-                else:
-                    trend_text = "안정 추세"
-                    trend_emoji = ""
-                    trend_color = "#3498db"
-                
+            # 선택된 품종이 한 개일 때만 상세 메트릭 및 인사이트를 표시
+            if len(species_list) == 1 and results:
+                single_result = results[0]
 
+                # 계산
+                avg_price = single_result['평균가'].mean()
+                max_price = single_result['낙찰고가'].max()
+                min_price = single_result['낙찰저가'].min()
+                price_range = max_price - min_price
+                price_volatility = (single_result['평균가'].std() / avg_price * 100)
                 
-                st.markdown(f"""
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                            padding: 9px; border-radius: 10px; color: white; height: 180px;">
-                    <h4>{trend_emoji} 최근 가격 동향</h4>
-                    <p style="font-size: 12px; line-height: 1.5;">
-                    최근 30일 평균가가<br/>
-                    전체 평균 대비 <b>{abs(trend_change):.1f}%</b><br/>
-                    <b style="color: {trend_color};">{trend_text}</b>
-                    </p>
-                    <p style="font-size: 12px; margin-top: 10px; opacity: 0.9;">
-                    최근 평균: {recent_avg:,.0f}원
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col_i2:
-                # 변동성 분석
-                if price_volatility > 20:
-                    volatility_level = "높음"
-                    volatility_desc = "가격 변동이 크므로 거래 시점 신중 선택 필요"
-                    vol_color = "#e74c3c"
-                elif price_volatility > 10:
-                    volatility_level = "중간"
-                    volatility_desc = "적당한 가격 변동으로 예측 가능성 양호"
-                    vol_color = "#f39c12"
+                # 최근 트렌드 (최근 30일 vs 전체 평균)
+                if len(single_result) > 30:
+                    recent_avg = single_result.tail(30)['평균가'].mean()
+                    trend_change = ((recent_avg - avg_price) / avg_price * 100)
                 else:
-                    volatility_level = "낮음"
-                    volatility_desc = "안정적인 가격으로 예측 가능성 높음"
-                    vol_color = "#2ecc71"
+                    recent_avg = avg_price
+                    trend_change = 0
                 
-                st.markdown(f"""
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                            padding: 9px; border-radius: 10px; color: white; height: 180px;">
-                    <h4> 가격 변동성</h4>
-                    <p style="font-size: 12px; line-height: 1.5;">
-                    변동성: <b style="color: {vol_color};">{volatility_level}</b><br/>
-                    {volatility_desc}
-                    </p>
-                    <p style="font-size: 12px; margin-top: 10px; opacity: 0.9;">
-                    변동계수: {price_volatility:.1f}%
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col_i3:
-                # 최적 거래 시기 (월별 평균)
-                if 'date' in result.columns:
-                    result_with_month = result.copy()
-                    result_with_month['month'] = pd.to_datetime(result_with_month['date']).dt.month
-                    monthly_avg = result_with_month.groupby('month')['평균가'].mean()
-                    best_month = monthly_avg.idxmin()
-                    worst_month = monthly_avg.idxmax()
-                    price_diff = ((monthly_avg.max() - monthly_avg.min()) / monthly_avg.mean() * 100)
+                # 4개 메트릭 카드
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    st.metric(
+                        label="평균 경락가",
+                        value=f"{avg_price:,.0f}원",
+                        delta=f"{trend_change:+.1f}% (최근 30일)"
+                    )
+                
+                with col2:
+                    st.metric(
+                        label="최고 낙찰가",
+                        value=f"{max_price:,.0f}원",
+                        delta=f"+{((max_price - avg_price) / avg_price * 100):.1f}%",
+                        delta_color="off"
+                    )
+                
+                with col3:
+                    st.metric(
+                        label="최저 낙찰가",
+                        value=f"{min_price:,.0f}원",
+                        delta=f"{((min_price - avg_price) / avg_price * 100):.1f}%",
+                        delta_color="off"
+                    )
+                
+                with col4:
+                    st.metric(
+                        label="가격 변동폭",
+                        value=f"{price_volatility:.1f}%",
+                        delta=f"범위 {price_range:,.0f}원"
+                    )
+
+                st.markdown('---')
+                
+                # ==================== 인사이트 카드 섹션 ====================
+                col_i1, col_i2, col_i3 = st.columns(3)
+                
+                with col_i1:
+                    # 가격 트렌드 분석
+                    if trend_change > 5:
+                        trend_text = "상승 추세"
+                        trend_emoji = ""
+                        trend_color = "#e74c3c"
+                    elif trend_change < -5:
+                        trend_text = "하락 추세"
+                        trend_emoji = ""
+                        trend_color = "#2ecc71"
+                    else:
+                        trend_text = "안정 추세"
+                        trend_emoji = ""
+                        trend_color = "#3498db"
                     
                     st.markdown(f"""
-                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);  
-                                padding: 15px; border-radius: 10px; color: white; height: 150px;">
-                        <h4> 최적 거래 시기</h4>
-                        <p style="font-size: 13px; line-height: 1.5;">
-                        <b>{best_month}월</b>에 가장 저렴<br/>
-                        <b>{worst_month}월</b>에 가장 비쌈
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                padding: 9px; border-radius: 10px; color: white; height: 180px;">
+                        <h4>{trend_emoji} 최근 가격 동향</h4>
+                        <p style="font-size: 12px; line-height: 1.5;">
+                        최근 30일 평균가가<br/>
+                        전체 평균 대비 <b>{abs(trend_change):.1f}%</b><br/>
+                        <b style="color: {trend_color};">{trend_text}</b>
                         </p>
                         <p style="font-size: 12px; margin-top: 10px; opacity: 0.9;">
-                        월별 가격차: {price_diff:.1f}%
+                        최근 평균: {recent_avg:,.0f}원
                         </p>
                     </div>
                     """, unsafe_allow_html=True)
+                
+                with col_i2:
+                    # 변동성 분석
+                    if price_volatility > 20:
+                        volatility_level = "높음"
+                        volatility_desc = "가격 변동이 크므로 거래 시점 신중 선택 필요"
+                        vol_color = "#e74c3c"
+                    elif price_volatility > 10:
+                        volatility_level = "중간"
+                        volatility_desc = "적당한 가격 변동으로 예측 가능성 양호"
+                        vol_color = "#f39c12"
+                    else:
+                        volatility_level = "낮음"
+                        volatility_desc = "안정적인 가격으로 예측 가능성 높음"
+                        vol_color = "#2ecc71"
+                    
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                padding: 9px; border-radius: 10px; color: white; height: 180px;">
+                        <h4> 가격 변동성</h4>
+                        <p style="font-size: 12px; line-height: 1.5;">
+                        변동성: <b style="color: {vol_color};">{volatility_level}</b><br/>
+                        {volatility_desc}
+                        </p>
+                        <p style="font-size: 12px; margin-top: 10px; opacity: 0.9;">
+                        변동계수: {price_volatility:.1f}%
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                with col_i3:
+                    # 최적 거래 시기 (월별 평균)
+                    if 'date' in single_result.columns:
+                        result_with_month = single_result.copy()
+                        result_with_month['month'] = pd.to_datetime(result_with_month['date']).dt.month
+                        monthly_avg = result_with_month.groupby('month')['평균가'].mean()
+                        best_month = monthly_avg.idxmin()
+                        worst_month = monthly_avg.idxmax()
+                        price_diff = ((monthly_avg.max() - monthly_avg.min()) / monthly_avg.mean() * 100)
+                        
+                        st.markdown(f"""
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);  
+                                    padding: 15px; border-radius: 10px; color: white; height: 150px;">
+                            <h4> 최적 거래 시기</h4>
+                            <p style="font-size: 13px; line-height: 1.5;">
+                            <b>{best_month}월</b>에 가장 저렴<br/>
+                            <b>{worst_month}월</b>에 가장 비쌈
+                            </p>
+                            <p style="font-size: 12px; margin-top: 10px; opacity: 0.9;">
+                            월별 가격차: {price_diff:.1f}%
+                            </p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.markdown("""
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);  
+                                    padding: 10px; border-radius: 10px; color: white; height: 180px;">
+                            <h4> 거래 정보</h4>
+                            <p style="font-size: 15px; line-height: 1.8;">
+                            선택한 품종과 상태의<br/>
+                            데이터를 분석 중입니다.
+                            </p>
+                        </div>
+                        """, unsafe_allow_html=True)
+            else:
+                # 여러 품종 선택 또는 품종 미선택 시 상세 카드는 표시하지 않음
+                if not selected_pure_species_list:
+                    st.info("품종을 선택하면 상세 정보가 표시됩니다.")
                 else:
-                    st.markdown("""
-                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);  
-                                padding: 10px; border-radius: 10px; color: white; height: 180px;">
-                        <h4> 거래 정보</h4>
-                        <p style="font-size: 15px; line-height: 1.8;">
-                        선택한 품종과 상태의<br/>
-                        데이터를 분석 중입니다.
-                        </p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                
-        else:
-            st.warning("데이터가 부족합니다.")
+                    st.info("여러 품종을 선택하셨습니다. 상세 메트릭과 인사이트는 품종을 하나만 선택했을 때 표시됩니다.")
             
 
     st.markdown("---")
@@ -748,6 +841,7 @@ def species_price():
         market_list = sorted(ocean_df['산지'].unique())
         # compact: market selectbox + section reset next to it, then species selectbox
         
+        ocean_df.dropna(inplace=True)
     
 
         col_m, col_m_reset, col_s = st.columns([2.5, 0.8, 2.5])
@@ -817,8 +911,12 @@ def species_price():
         
             # ==================== 메트릭 카드 섹션 (맨 아래로 이동) ====================
         st.markdown("---")
-       
-        # 계산
+
+        # 모든 어종에 대한 상관관계 계산
+        species_correlations = calculate_species_correlations(df, ocean_df, selected_market)
+        most_affected = get_most_affected_species(species_correlations)
+        
+        # 현재 선택된 어종에 대한 계산
         avg_price = merged['평균가'].mean()
         max_price = merged['평균가'].max()
         min_price = merged['평균가'].min()
@@ -874,6 +972,61 @@ def species_price():
             )
         
         # ==================== 인사이트 카드 섹션 ====================
+
+        st.markdown("---")
+
+        # 환경 변수별 가장 영향받는 어종 표시
+        st.subheader(f"📊 {selected_market}의 환경 변수별 영향도 순위")
+        
+        env_col1, env_col2, env_col3 = st.columns(3)
+        
+        with env_col1:
+            temp_species = most_affected['수온']['species']
+            temp_corr = most_affected['수온']['correlation']
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+                        padding: 15px; border-radius: 10px; color: white;">
+                <h4>🌊 수온 영향 1위</h4>
+                <p style="font-size: 16px; line-height: 1.5;">
+                <b>{temp_species}</b>
+                </p>
+                <p style="font-size: 12px; opacity: 0.9;">
+                상관계수: {temp_corr:.3f}
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with env_col2:
+            air_species = most_affected['기온']['species']
+            air_corr = most_affected['기온']['correlation']
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+                        padding: 15px; border-radius: 10px; color: white;">
+                <h4>🌡️ 기온 영향 1위</h4>
+                <p style="font-size: 16px; line-height: 1.5;">
+                <b>{air_species}</b>
+                </p>
+                <p style="font-size: 12px; opacity: 0.9;">
+                상관계수: {air_corr:.3f}
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with env_col3:
+            wind_species = most_affected['풍속']['species']
+            wind_corr = most_affected['풍속']['correlation']
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+                        padding: 15px; border-radius: 10px; color: white;">
+                <h4>🌪️ 풍속 영향 1위</h4>
+                <p style="font-size: 16px; line-height: 1.5;">
+                <b>{wind_species}</b>
+                </p>
+                <p style="font-size: 12px; opacity: 0.9;">
+                상관계수: {wind_corr:.3f}
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
 
         st.markdown("---")
         
