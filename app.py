@@ -21,46 +21,70 @@ def main():
     # 버튼 스타일 적용 CSS (key가 custom_chatbot_btn인 버튼 대상으로)
     st.markdown("""
     <style>
+    :root{
+        --chatbot_right : 1rem;
+        --chatbot_height : 78vh;
+        
+    }
     div.st-key-custom_chatbot_btn div.stButton > button[kind="secondary"] {
-        width: 180px !important;
-        height: 60px !important;
-        font-size: 20px !important;
-        border-radius: 50px !important;
+        width: 8rem;
+        height: 3.2rem; 
+        border-radius: 50px;
         background: linear-gradient(90deg, #667eea, #5a67d8) !important;
-        color: white !important;
-        border: none !important;
+        color: #fff;
+        border: none;
         cursor: pointer !important;
         transition: background 0.3s ease !important;
         position: fixed;
-        right: 1.2rem;
+        right: var(--chatbot_right);
         bottom: 2%;
         z-index: 99999;
     }
-    div.st-key-custom_chatbot_btn div.stButton > button[kind="secondary"]:hover {
+    div.st-key-custom_chatbot_btn div.stButton > button[kind="secondary"]:hover,
+    div.st-key-custom_chatbot_btn div.stButton > button[kind="secondary"]:active {
         background: linear-gradient(90deg, #5a67d8, #556cd6) !important;
     }
-    div.st-key-custom_chatbot_btn div.stButton > button[kind="secondary"]:active {
-        background: linear-gradient(90deg, #556cd6, #4a57b3) !important;
-    }
+    
     </style>
     """, unsafe_allow_html=True)
 
-    # 위치 고정을 위해 float_box를 빈 컨테이너로 띄워 좌표 조정(아래)
-    float_box("", right="1.2rem", bottom="0.2rem", width="0px", height="0px")
 
     # 버튼 생성 (type="secondary" 스타일, key 지정)
-    if st.button("챗봇 문의", key="custom_chatbot_btn", type="secondary"):
-        toggle()
+    button_label = "챗봇 닫기" if st.session_state.open else "챗봇 문의"
+    if st.button(button_label, key="custom_chatbot_btn", on_click=toggle, type="secondary"):
+        pass
 
     # 챗봇 팝업 float_box
     if st.session_state.open:
         float_box(
             """
-            <div style='position: relative; width: 100%; height: 100%;'>
-                <button onclick="window.parent.postMessage('toggle_chatbot', '*')" 
-                    style='position: absolute; top: 10px; right: 0px; font-size: 24px; border: none; background: none; cursor: pointer;'>×</button>
-                <iframe src="https://app-gemini.streamlit.app/?embedded=true" width="100%" height="100%" frameborder="0" style="border-radius: 10px;"></iframe>
+            <div class="fake_floating">
+                <div class="custom-iframe-container">
+                    <iframe src="https://app-gemini.streamlit.app/?embedded=true" width="100%" height="100%" frameborder="0" style="border-radius: 10px;"></iframe>
+                </div>
             </div>
+            <style>
+            div.floating{
+                box-shadow: unset;
+                padding: 0;
+                right: var(--chatbot_right);
+                height: var(--chatbot_height);
+                top: calc(100% - var(--chatbot_height) - 4.8rem);
+            }
+            div.floating > div.fake_floating {
+                width: inherit;
+                height: inherit;
+                position: inherit;
+            }
+            .custom-iframe-container {
+                width: inherit;
+                height: inherit;
+                overflow: hidden;
+                border-radius: 10px;
+                box-shadow: #434343 0px 0px 6px;
+                background-color: #ccc;
+            }
+            </style>
             """,
             width="400px",
             height="600px",
