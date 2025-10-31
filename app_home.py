@@ -303,7 +303,7 @@ def run_home():
                 margin-left: auto; margin-right: auto;'>
         <h2 style='color: #2c3e50; margin: 0; font-size: 2.2em;
                    font-weight: 900; text-align: center;'>
-            오늘의 시세
+            최근 가격 추이
         </h2>
     </div>
     """, unsafe_allow_html=True)
