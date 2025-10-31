@@ -1,5 +1,5 @@
 import streamlit as st
-
+from streamlit_float import float_init, float_box
 from app_home import run_home
 from app_ml import run_ml
 from app_species import species_price
@@ -10,6 +10,14 @@ from app_ml2 import run_ml2
 
 def main():
 
+    float_init()
+
+    float_box(
+        "<button style='width:100%;height:100%;font-size:20px;border-radius:50px;padding:10px 30px; color:white; background:linear-gradient(90deg,#667eea,#5a67d8);border:none;cursor:pointer;' onclick=\"window.open('https://your-chatbot-url','_blank')\">챗봇 문의</button>",
+        right="2rem", bottom="2rem", width="180px", height="78px"
+    )
+
+    
     menu = ['홈', '시세 알아보기', '시세 예측하기']
     sub_menu = ['어종별 시세', '산지별 시세']
     ml_menu = ['날짜별 예측','상세 검색 예측']
@@ -30,7 +38,7 @@ def main():
     st.sidebar.title("")    
     choice = st.sidebar.selectbox('메뉴', menu)
     
-    
+
 
     if choice == menu[0]:
         run_home()
