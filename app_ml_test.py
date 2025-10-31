@@ -17,7 +17,7 @@ def _clean_price_series(s):
 
 
 def run_ml():
-    """수산물 경락가 예측 시스템
+    """수산물 경매가 예측 시스템
 
     수산물 도매 거래를 위한 가격 동향 분석 및 예측 도구입니다.
     시장 가격 예측을 통해 효율적인 구매 계획을 수립할 수 있습니다.
@@ -25,7 +25,7 @@ def run_ml():
     
     # 페이지 기본 설정
     st.set_page_config(
-        page_title="수산물 경락가 예측 시스템",
+        page_title="수산물 경매가 예측 시스템",
         page_icon="🐟",
         layout="wide"
     )
@@ -166,9 +166,9 @@ def run_ml():
     # 그래프 스타일링 개선
     fig = model.plot(forecast)
     sns.set_theme(style="whitegrid")
-    plt.title(f'{species} 경락가 동향 및 예측', pad=20, fontsize=14)
+    plt.title(f'{species} 경매가 동향 및 예측', pad=20, fontsize=14)
     plt.xlabel('거래 시기', fontsize=12)
-    plt.ylabel('예상 경락가 (원)', fontsize=12)
+    plt.ylabel('예상 경매가 (원)', fontsize=12)
     st.pyplot(fig)
 
     # 예측 데이터 준비
@@ -179,7 +179,7 @@ def run_ml():
     st.markdown("""
         <div style='background-color:#f8f9fa; padding:20px; border-radius:10px; margin:20px 0'>
         <h2 style='color:#1e3d59; margin:0'>💰 예상 거래 가격</h2>
-        <p style='color:#666; margin:10px 0'>선택하신 주요 거래월의 예상 경락가와 변동 범위입니다</p>
+        <p style='color:#666; margin:10px 0'>선택하신 주요 거래월의 예상 경매가와 변동 범위입니다</p>
         </div>
     """, unsafe_allow_html=True)
     
