@@ -179,7 +179,7 @@ def plot_ocean_metrics(merged, ocean_vars, selected_market, selected_file_specie
 
     # 평균가 (왼쪽 축)
     ax1.plot(x_ticks, merged['평균가'], color='tab:blue', marker='o', label='평균가')
-    ax1.set_xlabel('연-월')
+    ax1.set_xlabel('연/월')
     ax1.set_ylabel('평균가 (원)', color='tab:blue')
     ax1.tick_params(axis='y', labelcolor='tab:blue')
 
@@ -229,7 +229,7 @@ def species_price():
     <div style="text-align: center; padding: 30px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                 border-radius: 15px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
         <h1 style="color: white; margin: 0; font-size: 2.5em; font-weight: 700;">
-             어종별 시세 분석 대시보드
+            어종별 시세 분석 대시보드
         </h1>
         <p style="color: rgba(255,255,255,0.95); margin-top: 15px; font-size: 1.15em; line-height: 0.7;">
             실시간 어종별 경매가 추이와 해양환경 데이터를 한눈에 확인하세요
@@ -279,14 +279,14 @@ def species_price():
     st.markdown("<br>", unsafe_allow_html=True)
 
     # 사용 방법 안내 (접을 수 있는 형태)
-    with st.expander("대시보드 사용 가이드"):
+    with st.expander("💡 대시보드 사용 가이드"):
         st.markdown("""
 
         ### 이렇게 활용하세요
         ######
         
         
-        **1️ 어종별 시세 분석**
+        **1️⃣ 어종별 시세 분석**
         - 관심 어종을 선택하여 일별 가격 변동 추이를 확인
         - 평균가, 최고가, 최저가를 비교하여 거래 시기 결정
         
@@ -300,7 +300,7 @@ def species_price():
         
         ---  
          **사용된 데이터 기간** : 2021년 ~ 2024년
- """)
+    """)
     st.markdown("---")
 
 
@@ -326,7 +326,7 @@ def species_price():
     <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
             padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;">
     <p style="margin: 0; font-size: 14px; opacity: 1;"> 
-    💡 어종별 시세를 한눈에 알아보세요.
+    💡어종별 시세를 한눈에 알아보세요.
     </p>
     </div>
     """, unsafe_allow_html=True)
@@ -420,7 +420,10 @@ def species_price():
                         delta=f"변동률 {price_volatility:.1f}%"
                     )
 
-                st.markdown('---')
+                st.markdown('')
+                st.markdown('')
+                st.markdown('')
+                st.markdown('')
                 
                 # ==================== 인사이트 카드 섹션 ====================
                 
@@ -507,18 +510,21 @@ def species_price():
                         </p>
                     </div>
                     """, unsafe_allow_html=True)
+
+    
                     
 
     # -------------------------------------------------
     # ② 파일어종 및 세부 어종별 낙찰가 비교
     # -------------------------------------------------
     st.markdown('---')
+
     st.subheader("② 품종 및 상태별 어종 경매가 ")
     # 설명 캡션 추가
     st.markdown("""
     <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
             padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;">
-     <p style="margin: 0; font-size: 14px; opacity: 1;"> 
+    <p style="margin: 0; font-size: 14px; opacity: 1;"> 
     💡 품종별, 상태별 시세를 비교하여 최적의 거래 시기를 파악해보세요.
     </p>
     </div>
@@ -976,73 +982,79 @@ def species_price():
         st.markdown("---")
 
         # 환경 변수별 가장 영향받는 어종 표시
-        st.subheader(f"📊 {selected_market}의 환경 변수별 영향도 순위")
+        st.subheader(f" {selected_market}의 환경별 관계 1순위 어종")
+
+        st.markdown('')
+    
         
         env_col1, env_col2, env_col3 = st.columns(3)
         
+        highlight_color = "#cdeff3"  # 연두색과 초록색 중간 느낌 색상
+
         with env_col1:
             temp_species = most_affected['수온']['species']
             temp_corr = most_affected['수온']['correlation']
             st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+            <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
                         padding: 15px; border-radius: 10px; color: white;">
-                <h4>🌊 수온 영향 1위</h4>
-                <p style="font-size: 16px; line-height: 1.5;">
-                <b>{temp_species}</b>
+                <h4> 수온 영향 1위</h4>
+                <p style="font-size: 20px; line-height: 1.5;">
+                    <b style="color: {highlight_color};">{temp_species}</b>
                 </p>
                 <p style="font-size: 12px; opacity: 0.9;">
-                상관계수: {temp_corr:.3f}
+                    상관계수: {temp_corr:.3f}
                 </p>
             </div>
             """, unsafe_allow_html=True)
-            
+
         with env_col2:
             air_species = most_affected['기온']['species']
             air_corr = most_affected['기온']['correlation']
             st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+            <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
                         padding: 15px; border-radius: 10px; color: white;">
-                <h4>🌡️ 기온 영향 1위</h4>
-                <p style="font-size: 16px; line-height: 1.5;">
-                <b>{air_species}</b>
+                <h4> 기온 영향 1위</h4>
+                <p style="font-size: 20px; line-height: 1.5;">
+                    <b style="color: {highlight_color};">{air_species}</b>
                 </p>
                 <p style="font-size: 12px; opacity: 0.9;">
-                상관계수: {air_corr:.3f}
+                    상관계수: {air_corr:.3f}
                 </p>
             </div>
             """, unsafe_allow_html=True)
-            
+
         with env_col3:
             wind_species = most_affected['풍속']['species']
             wind_corr = most_affected['풍속']['correlation']
             st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+            <div style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
                         padding: 15px; border-radius: 10px; color: white;">
-                <h4>🌪️ 풍속 영향 1위</h4>
-                <p style="font-size: 16px; line-height: 1.5;">
-                <b>{wind_species}</b>
+                <h4> 풍속 영향 1위</h4>
+                <p style="font-size: 20px; line-height: 1.5;">
+                    <b style="color: {highlight_color};">{wind_species}</b>
                 </p>
                 <p style="font-size: 12px; opacity: 0.9;">
-                상관계수: {wind_corr:.3f}
+                    상관계수: {wind_corr:.3f}
                 </p>
             </div>
             """, unsafe_allow_html=True)
+
 
         st.markdown("---")
         
         col_i1, col_i2, col_i3 = st.columns(3)
         
-        with col_i1: 
-            # 수온 영향 분석 
-            if corr_temp < -0.3: 
-                temp_insight = "수온이 높을수록 가격이 <b>하락</b>하는 역상관 관계" 
-                temp_emoji = "" 
+        with col_i1:
+            if corr_temp < -0.3:
+                temp_insight = "수온이 높을수록 가격이 <b><span style='color: #fa4e3b;'>하락</span></b>하는 역상관 관계"  
+                temp_emoji = ""
             elif corr_temp > 0.3:
-                temp_insight = "수온이 높을수록 가격이 <b>상승</b>하는 양의 상관관계" 
+                temp_insight = "수온이 높을수록 가격이 <b><span style='color: #f39c12;'>상승</span></b>하는 양의 상관관계"  
                 temp_emoji = ""
-            else: 
-                temp_insight = "수온과 가격 간 <b>약한 상관관계</b>" 
+            else:
+                temp_insight = "수온과 가격 간 <span style='color: #fa4e3b;'><b>약한 상관관계</b></span>"
                 temp_emoji = ""
+
 
             st.markdown(f"""
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
@@ -1073,26 +1085,26 @@ def species_price():
             season_diff = ((season_avg.max() - season_avg.min()) / season_avg.mean() * 100)
             
             st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                        padding: 15px; border-radius: 10px; color: white; height: 180px;">
-                <h4> 계절별 시세</h4>
-                <p style="font-size: 13px; line-height: 1.5;">
-                <b>{highest_season}</b>에 최고가<br/>
-                <b>{lowest_season}</b>에 최저가 기록
-                </p>
-                <p style="font-size: 12px; margin-top: 10px; opacity: 0.9;">
-                계절 간 가격차: {season_diff:.1f}%
-                </p>
-            </div>
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            padding: 15px; border-radius: 10px; color: white; height: 180px;">
+                    <h4> 계절별 시세</h4>
+                    <p style="font-size: 13px; line-height: 1.5;">
+                        <b>{highest_season}</b>에<b style="color: #fa4e3b;"> 최고가</b><br/>
+                        <b>{lowest_season}</b>에<b style="color: #2ecc71;"> 최저가</b>기록</b>
+                    </p>
+                    <p style="font-size: 12px; margin-top: 10px; opacity: 0.9;">
+                        계절 간 가격차: {season_diff:.1f}%
+                    </p>
+                </div>
             """, unsafe_allow_html=True)
 
             
-        
+
         with col_i3:
             # 풍속 영향
             if abs(corr_wind) > 0.3:
                 wind_impact = "높음"
-                wind_color = "#e74c3c"
+                wind_color = "#fa4e3b"
             elif abs(corr_wind) > 0.15:
                 wind_impact = "중간"
                 wind_color = "#f39c12"

@@ -302,7 +302,7 @@ def run_ml():
         name='실제 거래가',
         line=dict(color='rgb(0, 204, 150)', width=3),
         marker=dict(size=6, color='rgb(0, 204, 150)', 
-                   line=dict(width=2, color='white')),
+                line=dict(width=2, color='white')),
         hovertemplate='<b>실제 거래가</b><br>날짜: %{x|%Y년 %m월}<br>가격: %{y:,.0f}원<extra></extra>'
     ))
     
@@ -384,7 +384,7 @@ def run_ml():
         <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
                     padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>
             <p style='margin: 5px 0 0 0; font-size: 14px; opacity: 0.95;'>
-                💡  선택하신 주요 거래월의 예상 경매가와 변동 범위입니다
+                💡선택하신 주요 거래월의 예상 경매가와 변동 범위입니다.
             </p>
         </div>
     """, unsafe_allow_html=True)

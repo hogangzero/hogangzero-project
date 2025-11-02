@@ -52,26 +52,26 @@ def run_home():
                 position: relative; overflow: hidden;'>
         <!-- 파도 패턴 SVG -->
         <svg style='position: absolute; bottom: 0; left: 0; width: 100%; height: 100px; opacity: 0.3;' 
-             xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
             <path fill="#ffffff" fill-opacity="1" 
-                  d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
+                d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
             </path>
         </svg>
         <svg style='position: absolute; bottom: -20px; left: 0; width: 100%; height: 120px; opacity: 0.2;' 
-             xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
             <path fill="#ffffff" fill-opacity="1" 
-                  d="M0,192L48,197.3C96,203,192,213,288,192C384,171,480,117,576,112C672,107,768,149,864,154.7C960,160,1056,128,1152,133.3C1248,139,1344,181,1392,202.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
+                d="M0,192L48,197.3C96,203,192,213,288,192C384,171,480,117,576,112C672,107,768,149,864,154.7C960,160,1056,128,1152,133.3C1248,139,1344,181,1392,202.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
             </path>
         </svg>
         <div style='text-align: center; position: relative; z-index: 1;'>
             <h1 style='color: white; margin: 0; font-size: 3.9em; font-weight: 800; 
-                       letter-spacing: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);'>
+                    letter-spacing: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);'>
                 호갱제로
             </h1>
             <div style=
                         border-radius: 2px; opacity: 0.8;'></div>
             <p style='color: rgba(255,255,255,0.95); font-size: 1.4em; margin: 10px 0 0 0;
-                      font-weight: 500; letter-spacing: 2.5px;'>
+                    font-weight: 500; letter-spacing: 2.5px;'>
                 투명한 수산 시장을 위한 AI 기반 데이터 분석 솔루션
             </p>
         </div>
@@ -171,44 +171,27 @@ def run_home():
                 width: 600px; 
                 margin-left: auto; margin-right: auto;'>
         <h2 style='color: #2c3e50; margin: 0; font-size: 2.2em;
-                   font-weight: 900; text-align: center;'>
-            AI 챗봇 기능 
+                font-weight: 900; text-align: center;'>
+            AI 안내 챗봇
         </h2>
     </div>
     """, unsafe_allow_html=True)
     
-    col_chat1, col_chat2 = st.columns(2)
-    
-    with col_chat1:
-        st.markdown("""
-        <div style='background: white; padding: 20px; border-radius: 10px;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-                    border-left: 4px solid #667eea;'>
-            <h3 style='color: #667eea; margin: 0 0 10px 0; font-size: 1.1em; font-weight: 600;'>
-                실시간 시세 상담 챗봇
-            </h3>
-            <p style='color: #666; font-size: 0.85em; line-height: 1.5; margin-bottom: 12px;'>
-                Google API 기반 실시간 수산물 시세 조회 및 가격 분석
-            </p>
-            <div style='background: #f8f9fa; padding: 12px; border-radius: 6px;
-                        border: 1px dashed #ddd; text-align: center;'>
-                <p style='color: #999; margin: 0; font-size: 0.8em;'>
-                    챗봇이 여기에 표시됩니다
-                </p>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
+    col_chat1, col_chat2 = st.columns([0.01, 0.99])  # 0 대신 아주 작은 양수를 줌
+
+    col_chat2 = st.columns(1)[0]  # 단일 컬럼 생성 후 사용
+
     with col_chat2:
         st.markdown("""
         <div style='background: white; padding: 20px; border-radius: 10px;
                     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-                    border-left: 4px solid #764ba2;'>
+                    border-left: 4px solid #764ba2;
+                    width: 100%; max-width: 700px; margin: auto;'>
             <h3 style='color: #764ba2; margin: 0 0 10px 0; font-size: 1.1em; font-weight: 600;'>
-                전문 지식 상담 챗봇
+                호갱제로 안내 상담  Chatbot
             </h3>
             <p style='color: #666; font-size: 0.85em; line-height: 1.5; margin-bottom: 12px;'>
-                RAG 기반 수산물 유통, 보관, 품질 관리 전문 정보 제공
+                이용 중 모르시는 부분은 챗봇에게 물어보세요!
             </p>
             <div style='background: #f8f9fa; padding: 12px; border-radius: 6px;
                         border: 1px dashed #ddd; text-align: center;'>
@@ -218,8 +201,8 @@ def run_home():
             </div>
         </div>
         """, unsafe_allow_html=True)
-    
-    st.markdown("<br><br>", unsafe_allow_html=True)
+
+    st.markdown('---')
     
     # ============================================================
     # 1. KPI 카드 섹션 - 통일된 헤더 + 가로형 카드
@@ -231,7 +214,7 @@ def run_home():
                 width: 600px; 
                 margin-left: auto; margin-right: auto;'>
         <h2 style='color: #2c3e50; margin: 0; font-size: 2.2em;
-                   font-weight: 900; text-align: center;'>
+                font-weight: 900; text-align: center;'>
             주요 지표
         </h2>
     </div>
@@ -255,7 +238,7 @@ def run_home():
                     display: flex; justify-content: space-between; align-items: center;'>
             <div style='text-align: left;'>
                 <p style='color: rgba(255,255,255,0.9); font-size: 1.1em; 
-                          margin: 0; font-weight: 500;'>등록 어종</p>
+                        margin: 0; font-weight: 500;'>등록 어종</p>
                 <p style='color: rgba(255,255,255,0.7); font-size: 0.9em; margin: 5px 0 0 0;'>
                     등록된 전체 어종 수
                 </p>
@@ -277,7 +260,7 @@ def run_home():
                     display: flex; justify-content: space-between; align-items: center;'>
             <div style='text-align: left;'>
                 <p style='color: rgba(255,255,255,0.9); font-size: 1.1em; 
-                          margin: 0; font-weight: 500;'>거래 산지</p>
+                        margin: 0; font-weight: 500;'>거래 산지</p>
                 <p style='color: rgba(255,255,255,0.7); font-size: 0.9em; margin: 5px 0 0 0;'>
                     전국 거래 산지 수
                 </p>
@@ -303,7 +286,7 @@ def run_home():
                 width: 600px; 
                 margin-left: auto; margin-right: auto;'>
         <h2 style='color: #2c3e50; margin: 0; font-size: 2.2em;
-                   font-weight: 900; text-align: center;'>
+                font-weight: 900; text-align: center;'>
             최근 가격 추이
         </h2>
     </div>
@@ -335,7 +318,7 @@ def run_home():
                 ax.set_xlabel('')
                 ax.set_ylabel('')
                 ax.set_title(f'{species}', fontsize=15, fontweight='bold', 
-                           pad=12, color='#2c3e50')
+                        pad=12, color='#2c3e50')
                 ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.8)
                 ax.tick_params(axis='x', rotation=45, labelsize=9)
                 ax.tick_params(axis='y', labelsize=10)
@@ -488,7 +471,8 @@ def run_home():
     <div style='text-align: center; color: #999; padding: 30px 0;
                 background: #f8f9fa; border-radius: 10px; margin-top: 40px;'>
         <p style='margin: 0; font-size: 0.95em;'>
-            데이터 출처: 수산물유통정보시스템(FIPS) | 해양환경정보시스템
+            데이터 출처:수산물유통정보시스템(FIPS) | 해양환경정보시스템<br>
+                        노량진수산물도매시장  | 통계자료
         </p>
         <p style='margin: 10px 0 0 0; font-size: 0.85em; color: #bbb;'>
             © 2025 호갱제로 - 투명한 수산 시장을 위한 AI 솔루션

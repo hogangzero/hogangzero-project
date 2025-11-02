@@ -101,7 +101,7 @@ def run_ml2():
         st.markdown('')
         st.markdown('---')
 
-        st.subheader("🛒 거래 조건 설정")
+        st.subheader("## 거래 조건 설정")
         st.header("기본 정보")
         col1, col2 = st.columns(2)
         with col1:
@@ -255,7 +255,7 @@ def run_ml2():
                         ohe = pre.named_transformers_.get('onehot')
                         if ohe and hasattr(ohe, 'categories_'):
                             cat_names = []
-                            cols = ['파일어종','산지_그룹화','규격_등급','포장_분류']
+                            cols = ['어종','산지','규격 등급','포장 형태']
                             for i, cats in enumerate(ohe.categories_):
                                 for c in cats:
                                     cat_names.append(f"{cols[i]}={c}")
@@ -276,9 +276,9 @@ def run_ml2():
                 for i in ax.patches:
                     width = i.get_width()
                     ax.text(width, i.get_y() + i.get_height()/2,
-                           f'{width*100:.1f}%',
-                           ha='left', va='center',
-                           fontsize=9, color='#666')
+                        f'{width*100:.1f}%',
+                        ha='left', va='center',
+                        fontsize=9, color='#666')
                 plt.tight_layout()
                 st.pyplot(fig)
                 st.markdown("""
