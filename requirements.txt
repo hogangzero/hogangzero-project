@@ -11,3 +11,5 @@ langchain_text_splitters
 prophet
 joblib
 plotly
+chromadb
+pypdf
