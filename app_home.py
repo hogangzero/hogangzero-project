@@ -187,24 +187,38 @@ def run_home():
         <div style='background: white; padding: 20px; border-radius: 10px;
                     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
                     border-left: 4px solid #764ba2;
-                    width: 100%; max-width: 700px; margin: auto;'>
+                    width: 100%; max-width: 700px; margin: auto; height: 24vh; max-height: 184px;'>
             <h3 style='color: #764ba2; margin: 0 0 10px 0; font-size: 1.1em; font-weight: 600;'>
                 호갱제로 안내 상담  Chatbot
             </h3>
             <p style='color: #666; font-size: 0.85em; line-height: 1.5; margin-bottom: 12px;'>
                 이용 중 모르시는 부분은 챗봇에게 물어보세요!
             </p>
-            <div style='background: #f8f9fa; padding: 12px; border-radius: 6px;
-                        border: 1px dashed #ddd; text-align: center;'>
-                <p style='color: #999; margin: 0; font-size: 0.8em;'>
-                    챗봇이 여기에 표시됩니다
-                </p>
-            </div>
         </div>
         """, unsafe_allow_html=True)
 
         app_llm.rag_llm_inner_ui()
 
+        # rag_llm_inner_ui 위치 변경 css
+        st.markdown("""
+        <style>
+            .stVerticalBlock{
+                    position: relative;
+                    }
+            .st-key-rag_question{
+                    position: absolute;
+                    bottom: 1.6rem;
+                    width: calc(100% - 40px);
+                    transform: translateX(-50%);
+                    left: 50%;
+                    }
+            .stTextInput > label{
+                    display: none;
+                    }
+            
+
+        </style>
+        """, unsafe_allow_html=True)
     st.markdown('---')
     
     # ============================================================

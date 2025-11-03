@@ -10,9 +10,9 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 def rag_llm_inner_ui():
-    st.header("호갱제로 안내 상담 Chatbot")
+    # st.header("호갱제로 안내 상담 Chatbot")
     rag_question = st.text_input(
-        "이용 중 모르시는 부분은 챗봇에게 물어보세요!", key="rag_question"
+        "", key="rag_question", placeholder="여기에 입력하세요"
     )
     
     @st.cache_resource
