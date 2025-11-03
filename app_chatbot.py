@@ -22,7 +22,7 @@ def chatbot_popup():
     st.markdown("""
     <style>
     :root{
-        --chatbot_right : 1rem;
+        --chatbot_right : 2rem;
         --chatbot_height : 78vh;
     }
     div.st-key-custom_chatbot_btn div.stButton > button[kind="secondary"] {
@@ -115,7 +115,7 @@ def chatbot_popup():
             }}
             </style>
             """,
-            width="400px",
+            width="500px",
             height="600px",
             right="1.2rem",
             bottom="5.5rem",
