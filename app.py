@@ -1,5 +1,8 @@
-import streamlit as st
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
+import streamlit as st
 from app_home import run_home
 from app_ml import run_ml
 from app_species import species_price

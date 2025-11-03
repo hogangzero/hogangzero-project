@@ -13,3 +13,4 @@ joblib
 plotly
 chromadb
 pypdf
+pysqlite3-binary
