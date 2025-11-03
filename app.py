@@ -53,7 +53,8 @@ def main():
         elif ml_choice == ml_menu[1]:
             run_ml2()
     elif choice == menu[3]:
-        run_llm()
+        # run_llm()
+        pass
 
     #챗봇
     chatbot_popup()

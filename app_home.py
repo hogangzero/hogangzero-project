@@ -1,4 +1,5 @@
 import streamlit as st
+import app_llm
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import font_manager, rc
@@ -201,6 +202,8 @@ def run_home():
             </div>
         </div>
         """, unsafe_allow_html=True)
+
+        app_llm.rag_llm_inner_ui()
 
     st.markdown('---')
     
