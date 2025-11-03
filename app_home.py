@@ -207,7 +207,7 @@ def run_home():
                     }
             .st-key-rag_question{
                     position: absolute;
-                    bottom: 1.6rem;
+                    top: 7.4rem;
                     width: calc(100% - 40px);
                     max-width: 660px;
                     transform: translateX(-50%);
