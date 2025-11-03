@@ -209,6 +209,7 @@ def run_home():
                     position: absolute;
                     bottom: 1.6rem;
                     width: calc(100% - 40px);
+                    max-width: 660px;
                     transform: translateX(-50%);
                     left: 50%;
                     }
