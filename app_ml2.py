@@ -210,7 +210,7 @@ def run_ml2():
                                 border: 2px solid #e9ecef; box-shadow: 0 4px 12px rgba(0,0,0,0.08);'>
                         <h2 style='color: #1e3d59; margin: 0 0 10px 0;'>{sel_file}</h2>
                         <div style='font-size: 32px; font-weight: 700; color: #2a5298; margin: 15px 0;'>
-                            {pred:,.0f}원
+                            {pred:,.0f} ₩
                         </div>
                         <div style='background: #f8f9fa; padding: 12px; border-radius: 8px; margin-top: 15px;'>
                             <div style='color: #666; font-size: 14px;'>예측 신뢰 구간 (5% ~ 95%)</div>
@@ -221,20 +221,6 @@ def run_ml2():
                     </div>
                 """, unsafe_allow_html=True)
 
-                # 다운로드
-                out_df = Xnew.copy()
-                out_df['예측가격'] = pred
-                if lower is not None:
-                    out_df['최소예상가격'] = lower
-                    out_df['최대예상가격'] = upper
-                csv_buf = io.StringIO()
-                out_df.to_csv(csv_buf, index=False)
-                st.download_button(
-                    label='📥 예측 결과 다운로드 (CSV)',
-                    data=csv_buf.getvalue(),
-                    file_name=f'{sel_file}_맞춤가격예측.csv',
-                    mime='text/csv'
-                )
             except Exception as e:
                 st.error(f'예측 실패: {e}')
 
