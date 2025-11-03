@@ -2,6 +2,7 @@ import os
 import re
 import io
 import joblib
+import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib import font_manager, rc
@@ -38,6 +39,126 @@ def _clean_price_series(s):
     if s.dtype == object:
         return s.fillna('0').astype(str).str.replace(r"[^0-9.-]", "", regex=True).replace('', '0').astype(float)
     return s.astype(float)
+
+
+# ------------------------------------------------------------
+# 모델/베이스라인 아티팩트 로딩 및 예측 유틸리티
+# ------------------------------------------------------------
+
+def _safe_name(name: str) -> str:
+    return re.sub(r"[^0-9a-zA-Z가-힣_]", "_", str(name))
+
+
+def _artifact_paths(species: str):
+    safe = _safe_name(species)
+    base = os.path.join('models', '')
+    return {
+        'prophet_best': os.path.join(base, f'prophet_best_{safe}.pkl'),
+        'prophet_best_meta': os.path.join(base, f'prophet_best_{safe}_meta.pkl'),
+        'prophet': os.path.join(base, f'prophet_{safe}.pkl'),
+        'prophet_meta': os.path.join(base, f'prophet_{safe}_meta.pkl'),
+        'baseline': os.path.join(base, f'baseline_{safe}.pkl'),
+        'baseline_meta': os.path.join(base, f'baseline_{safe}_meta.pkl'),
+        # 기존 캐시(앱 내부 학습용)
+        'simple_cache': os.path.join(base, f'model_{safe}.pkl'),
+    }
+
+
+def load_best_artifact(species: str):
+    """어종별로 저장된 최적 아티팩트를 로드한다.
+    우선순위: prophet_best > prophet > baseline > None
+    반환: (kind, artifact, meta)
+      - kind: 'prophet' | 'baseline' | None
+      - artifact: Prophet 객체 또는 베이스라인 dict (없으면 None)
+      - meta: dict (없으면 {})
+    """
+    paths = _artifact_paths(species)
+    # 1) prophet_best
+    if os.path.exists(paths['prophet_best']):
+        try:
+            model = joblib.load(paths['prophet_best'])
+            meta = joblib.load(paths['prophet_best_meta']) if os.path.exists(paths['prophet_best_meta']) else {}
+            return 'prophet', model, meta
+        except Exception:
+            pass
+    # 2) prophet
+    if os.path.exists(paths['prophet']):
+        try:
+            model = joblib.load(paths['prophet'])
+            meta = joblib.load(paths['prophet_meta']) if os.path.exists(paths['prophet_meta']) else {}
+            return 'prophet', model, meta
+        except Exception:
+            pass
+    # 3) baseline
+    if os.path.exists(paths['baseline']):
+        try:
+            artifact = joblib.load(paths['baseline'])
+            meta = joblib.load(paths['baseline_meta']) if os.path.exists(paths['baseline_meta']) else {}
+            return 'baseline', artifact, meta
+        except Exception:
+            pass
+    return None, None, {}
+
+
+def _predict_baseline(monthly_df: pd.DataFrame, months: int, method: str = 'seasonal_naive') -> pd.DataFrame:
+    """월별 시계열 monthly_df (cols: ds, y)를 기반으로 베이스라인 예측 생성.
+    method: 'seasonal_naive' | 'last_value'
+    반환 컬럼: ds, yhat, yhat_lower, yhat_upper
+    """
+    df = monthly_df.copy()
+    df = df.sort_values('ds')
+    last_ds = df['ds'].max()
+    # 예측용 future ds 생성
+    future_ds = pd.date_range(last_ds + pd.offsets.MonthEnd(1), periods=months, freq='M')
+
+    history = df['y'].values
+    preds = []
+    if method == 'last_value':
+        last_val = history[-1]
+        preds = [last_val] * months
+    else:
+        # seasonal_naive (12개월 주기)
+        if len(history) >= 12:
+            season = history[-12:]
+        else:
+            # 12개월 미만이면 전 구간을 주기로 사용
+            season = history
+        for i in range(months):
+            preds.append(season[i % len(season)])
+
+    yhat = np.array(preds, dtype=float)
+    # 신뢰구간은 베이스라인에선 동일 값으로 표기
+    out = pd.DataFrame({
+        'ds': future_ds,
+        'yhat': yhat,
+        'yhat_lower': yhat,
+        'yhat_upper': yhat,
+    })
+    return out
+
+
+def predict_with_artifact(kind: str, artifact, meta: dict, monthly_df: pd.DataFrame, months: int) -> pd.DataFrame:
+    """저장된 아티팩트 종류에 따라 예측 DataFrame 반환(ds, yhat, yhat_lower, yhat_upper).
+    """
+    if kind == 'prophet' and artifact is not None:
+        model: Prophet = artifact
+        future = model.make_future_dataframe(periods=months, freq='M')
+        fcst = model.predict(future)
+        # 필요 시 로그 역변환
+        use_log = bool(meta.get('use_log', False))
+        cols = ['yhat', 'yhat_lower', 'yhat_upper']
+        if use_log:
+            for c in cols:
+                if c in fcst.columns:
+                    fcst[c] = np.expm1(fcst[c])
+        return fcst[['ds'] + cols]
+
+    if kind == 'baseline':
+        method = meta.get('baseline_name', 'seasonal_naive')
+        return _predict_baseline(monthly_df, months, method)
+
+    # fallback (없으면 빈 DataFrame)
+    return pd.DataFrame(columns=['ds', 'yhat', 'yhat_lower', 'yhat_upper'])
 
 
 def run_ml():
@@ -134,10 +255,9 @@ def run_ml():
             - **장기 트렌드**: 연간 가격 추세를 파악하세요
             """)
 
-    # 모델 디렉터리
-    model_dir = os.path.join('.', 'models')
-    os.makedirs(model_dir, exist_ok=True)
-    model_file = os.path.join(model_dir, f'model_{re.sub(r"[^0-9a-zA-Z가-힣_]","_", species)}.pkl')
+    # 모델/베이스라인 아티팩트 확인 (prophet_best > prophet > baseline)
+    os.makedirs(os.path.join('.', 'models'), exist_ok=True)
+    artifact_kind, artifact, meta = load_best_artifact(species)
 
     # 선택한 어종 데이터 월 단위 집계 (평균)
     df_sp = df[df['파일어종'] == species].copy()
@@ -161,6 +281,8 @@ def run_ml():
     </div>
     """, unsafe_allow_html=True)
     
+    # 사용 모델 정보 표시용 텍스트 준비 (초기에는 빈 값, 아래에서 채움)
+    model_info_text = ""
     st.info(f'선택한 어종: **{species}** | 예측 기간: **{years_to_forecast}년 ({months}개월)**')
     st.markdown('---')
 
@@ -186,25 +308,34 @@ def run_ml():
 
 
 
-    # 모델 로드 또는 학습
-    model = None
-    if os.path.exists(model_file):
-        try:
-            model = joblib.load(model_file)
-        except Exception as e:
-            model = None
-            st.warning('시스템을 초기화하고 있습니다. 잠시만 기다려주세요.')
-
-    if model is None:
-        with st.spinner('🔄 시장 데이터 분석 중...'):
-            model = Prophet(yearly_seasonality=True, weekly_seasonality=False, daily_seasonality=False)
+    # 저장된 아티팩트가 없으면 간단 Prophet을 학습하여 캐시
+    if artifact_kind is None or artifact is None:
+        with st.spinner('시장 데이터 분석 중... (모델 초기 학습)'):
             try:
-                model.fit(monthly)
-                joblib.dump(model, model_file)
-                st.success(' 데이터 분석이 완료되었습니다!')
+                simple_model = Prophet(yearly_seasonality=True, weekly_seasonality=False, daily_seasonality=False)
+                simple_model.fit(monthly)
+                # 간이 캐시 저장 (향후 빠른 로드용)
+                joblib.dump(simple_model, _artifact_paths(species)['simple_cache'])
+                artifact_kind, artifact, meta = 'prophet', simple_model, {'use_log': False, 'model_kind': 'prophet'}
+                st.success('데이터 분석이 완료되었습니다!')
             except Exception as e:
-                st.error(' 분석 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.')
+                st.error('분석 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.')
                 return
+
+    # 사용 모델(또는 베이스라인) 정보 표시
+    if artifact_kind == 'prophet':
+        r2 = meta.get('validation_r2', None)
+        model_info_text = f"사용 모델: Prophet (로그변환: {'ON' if meta.get('use_log') else 'OFF'})"
+        if r2 is not None:
+            model_info_text += f" | 검증 R2: {r2:.3f}"
+    elif artifact_kind == 'baseline':
+        base_name = meta.get('baseline_name', 'seasonal_naive')
+        r2 = meta.get('validation_r2', None)
+        model_info_text = f"사용 모델: Baseline [{base_name}]"
+        if r2 is not None:
+            model_info_text += f" | 검증 R2: {r2:.3f}"
+    if model_info_text:
+        st.caption(model_info_text)
 
     st.markdown('---')
 
@@ -221,12 +352,21 @@ def run_ml():
         </div>
     """, unsafe_allow_html=True)
 
-    # Prophet 컴포넌트 분석
-    future = model.make_future_dataframe(periods=months, freq='M')
-    forecast = model.predict(future)
-    
+    # Prophet 컴포넌트 분석 (Prophet 모델일 때만 제공)
+    forecast = None
+    if artifact_kind == 'prophet':
+        model = artifact
+        future = model.make_future_dataframe(periods=months, freq='M')
+        fcst_tmp = model.predict(future)
+        # 저장 모델이 로그로 학습된 경우 역변환
+        if bool(meta.get('use_log', False)):
+            for c in ['yhat', 'yhat_lower', 'yhat_upper']:
+                if c in fcst_tmp.columns:
+                    fcst_tmp[c] = np.expm1(fcst_tmp[c])
+        forecast = fcst_tmp
+
     # 계절성 데이터 추출
-    if 'yearly' in forecast.columns:
+    if forecast is not None and 'yearly' in forecast.columns:
         seasonality_data = forecast[['ds', 'yearly']].copy()
         seasonality_data['month'] = seasonality_data['ds'].dt.month
         
@@ -326,9 +466,8 @@ def run_ml():
         </div>
     """, unsafe_allow_html=True)
 
-    # 가격 예측 수행
-    future = model.make_future_dataframe(periods=months, freq='M')
-    forecast = model.predict(future)
+    # 가격 예측 수행 (Prophet/베이스라인 공통 처리)
+    forecast = predict_with_artifact(artifact_kind, artifact, meta, monthly, months)
 
     # 예측 데이터 준비
     forecast_monthly = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].copy()
@@ -446,7 +585,7 @@ def run_ml():
         linecolor='#2c3e50',
         linewidth=2
     ),
-    yaxis=dict(
+    yaxis=dict( 
         title='경매가 (원)',
         showgrid=True,
         gridcolor='rgba(150, 150, 150, 0.3)',
@@ -487,7 +626,6 @@ def run_ml():
     st.markdown('---')
 
     # 주요 거래월 예측 결과 - 스타일 변경
-    st.subheader('⑤ 주요 거래월 예상 경매가')
     st.markdown("""
         <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
                     padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>
