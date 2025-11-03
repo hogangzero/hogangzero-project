@@ -66,17 +66,6 @@ def run_ml():
     
     st.markdown('---')
 
-    # 안내 메시지
-    st.markdown("""
-    <div style='text-align: center; color: #666; margin-bottom: 7px;
-                background: #f8f9fa; padding: 15px; border-radius: 10px;'>
-        <p style='margin: 0; font-size: 1.4em; line-height: 1.5;'>
-            좌측 사이드바에서 어종과 예측 기간을 설정하세요
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-    st.markdown('---')
-
     data_path = os.path.join('data', '수산물_통합전처리_3컬럼.csv')
     if not os.path.exists(data_path):
         st.error(f'데이터 파일이 없습니다: {data_path}')
@@ -162,6 +151,18 @@ def run_ml():
     monthly = monthly.dropna()
     monthly = monthly.rename(columns={'date': 'ds', '평균가': 'y'})
 
+    # 안내 메시지
+    st.markdown("""
+    <div style='text-align: center; color: #666; margin-bottom: 7px;
+                background: #f8f9fa; padding: 15px; border-radius: 10px;'>
+        <p style='margin: 0; font-size: 1.4em; line-height: 1.5;'>
+            좌측 사이드바에서 어종과 예측 기간을 설정하세요
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.info(f'선택한 어종: **{species}** | 예측 기간: **{years_to_forecast}년 ({months}개월)**')
+    st.markdown('---')
 
     # 최근 시장 동향 표시 - 스타일 변경
     st.subheader('① 최근 시장 경매가')
@@ -207,8 +208,115 @@ def run_ml():
 
     st.markdown('---')
 
+    # ============================================================
+    # 🆕 계절성 패턴 분석 섹션 추가
+    # ============================================================
+    st.subheader('② AI가 포착한 계절성 패턴')
+    st.markdown("""
+        <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+                    padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>
+            <p style='margin: 5px 0 0 0; font-size: 14px; opacity: 0.95;'>
+                💡  Prophet AI가 학습한 월별 가격 변동 패턴입니다.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Prophet 컴포넌트 분석
+    future = model.make_future_dataframe(periods=months, freq='M')
+    forecast = model.predict(future)
+    
+    # 계절성 데이터 추출
+    if 'yearly' in forecast.columns:
+        seasonality_data = forecast[['ds', 'yearly']].copy()
+        seasonality_data['month'] = seasonality_data['ds'].dt.month
+        
+        # 월별 평균 계절성 계산
+        monthly_seasonality = seasonality_data.groupby('month')['yearly'].mean().reset_index()
+        monthly_seasonality['month_name'] = monthly_seasonality['month'].apply(lambda x: f'{x}월')
+        
+        # Plotly로 계절성 그래프 생성
+        fig_seasonality = go.Figure()
+        
+        # 막대 그래프
+        colors = ['#667eea' if x >= 0 else '#f093fb' for x in monthly_seasonality['yearly']]
+        
+        fig_seasonality.add_trace(go.Bar(
+            x=monthly_seasonality['month_name'],
+            y=monthly_seasonality['yearly'],
+            marker=dict(
+                color=colors,
+                line=dict(color='white', width=2)
+            ),
+            text=monthly_seasonality['yearly'].apply(lambda x: f'{x:+.0f}'),
+            textposition='outside',
+            hovertemplate='<b>%{x}</b><br>계절성 효과: %{y:+,.0f}원<extra></extra>'
+        ))
+        
+        fig_seasonality.update_layout(
+            title={
+                'text': f'<b>{species}</b> 월별 가격 변동 패턴 (AI 학습 결과)',
+                'font': {'size': 20, 'color': '#000000', 'family': 'Arial Black'},
+                'x': 0.5,
+                'xanchor': 'center'
+            },
+            xaxis=dict(
+                title='월',
+                showgrid=False,
+                tickfont=dict(size=12, color='#000000'),
+                linecolor='#2c3e50',
+                linewidth=2
+            ),
+            yaxis=dict(
+                title='가격 변동 효과 (원)',
+                showgrid=True,
+                gridcolor='rgba(150, 150, 150, 0.3)',
+                zeroline=True,
+                zerolinecolor='rgba(0, 0, 0, 0.3)',
+                zerolinewidth=2,
+                tickfont=dict(size=12, color='#000000'),
+                linecolor='#2c3e50',
+                linewidth=2
+            ),
+            plot_bgcolor='#f8f9fa',
+            paper_bgcolor='white',
+            height=450,
+            showlegend=False,
+            margin=dict(t=80, b=50, l=70, r=50)
+        )
+        
+        fig_seasonality.update_xaxes(title_font=dict(size=14, color='#000000', family='Arial'))
+        fig_seasonality.update_yaxes(title_font=dict(size=14, color='#000000', family='Arial'))
+        
+        st.plotly_chart(fig_seasonality, use_container_width=True)
+        
+        # 패턴 해석 도움말
+        with st.expander("그래프 해석 방법"):
+            max_month = monthly_seasonality.loc[monthly_seasonality['yearly'].idxmax(), 'month']
+            min_month = monthly_seasonality.loc[monthly_seasonality['yearly'].idxmin(), 'month']
+            
+            st.markdown(f"""
+            **이 그래프는 무엇을 보여주나요?**
+            
+            - **파란 막대 (양수)**: 평균보다 가격이 높은 시기
+            - **분홍 막대 (음수)**: 평균보다 가격이 낮은 시기
+            - **0선 기준**: 연간 평균 가격
+            
+            **{species}의 계절성 특징**
+            
+            - 🔴 **가격 최고점**: {max_month}월 (성수기 가능성)
+            - 🔵 **가격 최저점**: {min_month}월 (비수기 가능성)
+            
+            **활용 방법**
+            
+            - 막대가 높을수록 해당 월에 가격이 평균보다 크게 상승
+            - 막대가 낮을수록 해당 월에 가격이 평균보다 크게 하락
+            - 구매 전략: 음수 월에 구매, 양수 월에 판매 고려
+            """)
+    
+    st.markdown('---')
+
     # 상세 데이터 및 다운로드 섹션 - 스타일 변경
-    st.subheader('② 경매가 예측하기')
+    st.subheader('③ 경매가 예측하기')
     st.markdown("""
         <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
                     padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>
@@ -240,7 +348,7 @@ def run_ml():
     st.markdown('---')
 
     # 예측 결과 시각화 - Plotly 인터랙티브 차트
-    st.subheader('② 예측 시세 그래프 보기')
+    st.subheader('④ 예측 시세 그래프 보기')
     st.markdown("""
         <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
                     padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>
@@ -379,7 +487,7 @@ def run_ml():
     st.markdown('---')
 
     # 주요 거래월 예측 결과 - 스타일 변경
-    st.subheader('③ 주요 거래월 예상 경매가')
+    st.subheader('⑤ 주요 거래월 예상 경매가')
     st.markdown("""
         <div style='background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
                     padding: 8px; border-radius: 10px; color: white; margin-bottom: 20px;'>
