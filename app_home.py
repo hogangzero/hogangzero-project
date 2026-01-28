@@ -4,44 +4,55 @@ import app_llm
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import font_manager, rc
-from koreanize_matplotlib import koreanize
 import datetime
-from matplotlib import font_manager
 import matplotlib as mpl
+import os
+import warnings
 
-
+warnings.filterwarnings('ignore')
 
 # ============================================================
 # 전역 설정
 # ============================================================
 def configure_matplotlib_font():
+    """배포 환경에 최적화된 폰트 설정"""
+    try:
+        from koreanize_matplotlib import koreanize
+        koreanize()
+        mpl.rcParams["axes.unicode_minus"] = False
+        return
+    except:
+        pass
+
+    # koreanize 실패 시 대체 폰트 설정
     candidates = [
-        # ✅ 레포에 폰트 포함한 경우(가장 추천)
+        # ✅ 레포에 폰트 포함한 경우
         Path(__file__).resolve().parent / "assets" / "fonts" / "NanumGothic.ttf",
-        # ✅ 리눅스에 패키지로 설치된 경우(packages.txt)
+        # ✅ 리눅스 시스템 폰트들
         Path("/usr/share/fonts/truetype/nanum/NanumGothic.ttf"),
         Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),
-        # ✅ Ubuntu/Debian 시스템 폰트
         Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.otf"),
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
     ]
 
     font_loaded = False
-    for p in candidates:
+    for font_path in candidates:
         try:
-            if p.exists():
-                font_manager.fontManager.addfont(str(p))
-                font_name = font_manager.FontProperties(fname=str(p)).get_name()
-                mpl.rcParams["font.family"] = font_name
-                mpl.rcParams["axes.unicode_minus"] = False
+            if font_path.exists():
+                mpl.rcParams["font.family"] = str(font_path)
                 font_loaded = True
                 break
-        except Exception as e:
+        except:
             continue
 
-    # ✅ 폰트가 없더라도 앱이 죽지 않게 fallback
+    # 폰트 로딩 실패 시 시스템 기본값 사용
     if not font_loaded:
         try:
-            mpl.rcParams["font.family"] = "DejaVu Sans"
+            # 배포 환경의 기본 폰트 사용
+            mpl.rcParams["font.sans-serif"] = [
+                "DejaVu Sans", "Noto Sans CJK JP", "Noto Sans CJK SC", 
+                "Noto Sans CJK TC", "Noto Sans CJK KR", "Arial"
+            ]
         except:
             pass
     

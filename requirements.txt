@@ -1,7 +1,7 @@
 pandas
 numpy
-matplotlib
-streamlit
+matplotlib>=3.5.0
+streamlit>=1.28.0
 streamlit_float
 koreanize_matplotlib
 langchain_core
@@ -13,3 +13,4 @@ joblib
 plotly
 chromadb
 pypdf
+Pillow
