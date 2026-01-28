@@ -10,27 +10,36 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib import font_manager, rc
-from koreanize_matplotlib import koreanize  # 한글 폰트 깨짐 방지
+import matplotlib as mpl
+from matplotlib import rc
+import warnings
+warnings.filterwarnings('ignore')
 
 # ============================================================
 # 전역 설정(Global Settings)
 # ============================================================
 
-# 한글 폰트 설정 (OS 자동 인식)
-try:
-    font_path = "/System/Library/Fonts/AppleSDGothicNeo.ttc"  # macOS
-    font_name = font_manager.FontProperties(fname=font_path).get_name()
-except:
-    font_path = "C:/Windows/Fonts/malgun.ttf"  # Windows
-    font_name = font_manager.FontProperties(fname=font_path).get_name()
-rc('font', family=font_name)
+# 한글 폰트 설정
+def setup_font():
+    try:
+        from koreanize_matplotlib import koreanize
+        koreanize()
+        return
+    except:
+        pass
+    
+    mpl.rcParams["font.sans-serif"] = [
+        "DejaVu Sans", "Noto Sans CJK JP", "Noto Sans CJK SC",
+        "Noto Sans CJK TC", "Noto Sans CJK KR", "Arial"
+    ]
+    mpl.rcParams['axes.unicode_minus'] = False
+
+setup_font()
 plt.rcParams['axes.unicode_minus'] = False
 plt.style.use('seaborn-v0_8-whitegrid')
 plt.rcParams['axes.titlesize'] = 13
 plt.rcParams['axes.labelsize'] = 11
 plt.rcParams['legend.fontsize'] = 10
-koreanize()  # 보조 폰트 지정
 
 DATE_TICK_STEP = 3  # 날짜 라벨 표시 간격
 
