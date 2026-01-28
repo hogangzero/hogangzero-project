@@ -1,6 +1,8 @@
 pandas
 numpy
 matplotlib>=3.5.0
+seaborn
+scikit-learn
 streamlit>=1.28.0
 streamlit_float
 koreanize_matplotlib
@@ -14,3 +16,4 @@ plotly
 chromadb
 pypdf
 Pillow
+reportlab
