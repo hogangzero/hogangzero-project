@@ -9,6 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+
 def rag_llm_inner_ui():
     # st.header("호갱제로 안내 상담 Chatbot")
     rag_question = st.text_input(
@@ -19,7 +20,7 @@ def rag_llm_inner_ui():
     def prepare_rag():
         PDF_PATH = "./data/호갱제로_사용설명서.pdf"
         CHROMA_DIR = "./pdf_storage/chroma_fish"
-        EMBED_MODEL = "text-embedding-004"
+        EMBED_MODEL = "gemini-embedding-001"
         LLM_MODEL = "gemini-2.5-flash"
         os.environ["GOOGLE_API_KEY"] = st.secrets["OPENAI_API_KEY"]
         
@@ -29,10 +30,17 @@ def rag_llm_inner_ui():
         splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=120)
         docs = splitter.split_documents(pages)
         
-        # ---- Chroma 폴더 무조건 삭제하여 깨끗하게 재생성 ----
+        # ---- Chroma 폴더 안전하게 삭제 ----
         if Path(CHROMA_DIR).exists():
             import shutil
-            shutil.rmtree(CHROMA_DIR)
+            import time
+            try:
+                shutil.rmtree(CHROMA_DIR)
+            except PermissionError:
+                # 파일이 잠겨있으면 잠깐 대기 후 재시도
+                time.sleep(1)
+                shutil.rmtree(CHROMA_DIR)
+        
         embeddings = GoogleGenerativeAIEmbeddings(model=EMBED_MODEL)
         vectordb = Chroma.from_documents(
             documents=docs,
@@ -47,7 +55,7 @@ def rag_llm_inner_ui():
         - 사용자가 앱 기본 기능(데이터 조회, 가격 비교, 예측 기능, 해양환경 영향 분석, 챗봇 등)에 대해 묻는 경우 구체적 사용법과 주요 화면(홈, 시세, 예측, 챗봇 등) 안내 절차를 안내하세요.
         - 예측값, 신뢰구간, AI 모델(Prophet, Random Forest), 해양환경 데이터, 데이터 기준 정보(수산물유통정보시스템, FIPS 등)에 대한 질문엔 설명서 내용만 바탕으로 설명하고 가정/추측을 하지 않습니다.
         - 각종 메트릭과 데이터 해석, 시각화(Plotly 기반 차트), 주요 사용 주의사항 및 제약(예: 데이터가 부족할 때/예측 불확실성/웹·브라우저 요구사양 등)은 반드시 안내하세요.
-        - 사용자가 너무 모호한 질문을 하면 “더 구체적으로 질문해 달라”고 요청할 수 있습니다.
+        - 사용자가 너무 모호한 질문을 하면 "더 구체적으로 질문해 달라"고 요청할 수 있습니다.
         - RAG 답변 능력에 맞춰, 시스템 내 정보 외 주관적인 조언, 추론이나 직접적인 점치는 문장은 하지 않습니다.
         - 용어, 데이터 구조, 권장 사양 등 요청하면 각 설명서를 기반으로 표, 리스트, 개념해설로 안내하세요.
         """
@@ -71,6 +79,7 @@ def rag_llm_inner_ui():
         chain = retriever_step | prompt | llm | StrOutputParser()
         return chain
 
+
     chain = prepare_rag()
     if rag_question:
         answer = chain.invoke({"question": rag_question})
@@ -81,6 +90,7 @@ def rag_llm_inner_ui():
             </div>
             """, unsafe_allow_html=True
         )
+
 
 # ---- Streamlit 실제 앱 ----
 def run_llm(*args, **kwargs):
