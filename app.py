@@ -7,6 +7,9 @@ from app_llm import run_llm
 from app_ml2 import run_ml2
 from app_chatbot import chatbot_popup
 
+# 캐시 무효화 (2026-01-29)
+__version__ = "1.1.0"
+
 def main():
 
     
