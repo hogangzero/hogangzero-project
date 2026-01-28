@@ -14,24 +14,21 @@ import matplotlib as mpl
 # ============================================================
 # 전역 설정
 # ============================================================
-font_candidates = [
-    "/System/Library/Fonts/AppleSDGothicNeo.ttc",           # mac
-    "C:/Windows/Fonts/malgun.ttf",                          # windows
-    str(Path(__file__).parent / "assets/fonts/NanumGothic.ttf"),  # repo local (추천)
-    "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",      # linux (packages.txt로 설치 시 가능)
-]
+def setup_font():
+    # app_home.py 기준 상대경로
+    font_path = Path(__file__).parent / "assets" / "fonts" / "NanumGothic.ttf"
 
-font_name = None
-for p in font_candidates:
-    try:
-        if Path(p).exists():
-            font_name = font_manager.FontProperties(fname=p).get_name()
-            rc("font", family=font_name)
-            break
-    except Exception:
-        pass
+    if font_path.exists():
+        font_manager.fontManager.addfont(str(font_path))
+        font_name = font_manager.FontProperties(fname=str(font_path)).get_name()
+        mpl.rcParams["font.family"] = font_name
+    else:
+        # 폰트 없으면 앱이 죽지 않게만 처리
+        mpl.rcParams["font.family"] = "DejaVu Sans"
 
-plt.rcParams["axes.unicode_minus"] = False
+    mpl.rcParams["axes.unicode_minus"] = False
+
+setup_font()
 
 # ============================================================
 # 데이터 로딩
