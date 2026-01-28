@@ -18,22 +18,33 @@ def configure_matplotlib_font():
     candidates = [
         # ✅ 레포에 폰트 포함한 경우(가장 추천)
         Path(__file__).resolve().parent / "assets" / "fonts" / "NanumGothic.ttf",
-
         # ✅ 리눅스에 패키지로 설치된 경우(packages.txt)
         Path("/usr/share/fonts/truetype/nanum/NanumGothic.ttf"),
         Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),
+        # ✅ Ubuntu/Debian 시스템 폰트
+        Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.otf"),
     ]
 
+    font_loaded = False
     for p in candidates:
-        if p.exists():
-            font_manager.fontManager.addfont(str(p))
-            font_name = font_manager.FontProperties(fname=str(p)).get_name()
-            mpl.rcParams["font.family"] = font_name
-            mpl.rcParams["axes.unicode_minus"] = False
-            return
+        try:
+            if p.exists():
+                font_manager.fontManager.addfont(str(p))
+                font_name = font_manager.FontProperties(fname=str(p)).get_name()
+                mpl.rcParams["font.family"] = font_name
+                mpl.rcParams["axes.unicode_minus"] = False
+                font_loaded = True
+                break
+        except Exception as e:
+            continue
 
     # ✅ 폰트가 없더라도 앱이 죽지 않게 fallback
-    mpl.rcParams["font.family"] = "DejaVu Sans"
+    if not font_loaded:
+        try:
+            mpl.rcParams["font.family"] = "DejaVu Sans"
+        except:
+            pass
+    
     mpl.rcParams["axes.unicode_minus"] = False
 
 configure_matplotlib_font()
