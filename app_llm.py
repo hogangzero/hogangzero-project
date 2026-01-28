@@ -22,7 +22,22 @@ def rag_llm_inner_ui():
         CHROMA_DIR = "./pdf_storage/chroma_fish"
         EMBED_MODEL = "gemini-embedding-001"
         LLM_MODEL = "gemini-2.5-flash"
-        os.environ["GOOGLE_API_KEY"] = st.secrets["OPENAI_API_KEY"]
+        
+        # API 키 로드 - 여러 가능한 키 이름 시도
+        api_key = None
+        for key_name in ["GOOGLE_API_KEY", "OPENAI_API_KEY", "google_api_key"]:
+            try:
+                api_key = st.secrets.get(key_name)
+                if api_key:
+                    break
+            except:
+                pass
+        
+        if not api_key:
+            st.error("🔑 Google API 키가 설정되지 않았습니다. Streamlit secrets에서 GOOGLE_API_KEY를 설정해주세요.")
+            return None
+            
+        os.environ["GOOGLE_API_KEY"] = api_key
         
         # PDF → 문서 객체 변환
         loader = PyPDFLoader(PDF_PATH)
