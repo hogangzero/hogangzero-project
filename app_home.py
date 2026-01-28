@@ -1,3 +1,4 @@
+from pathlib import Path
 import streamlit as st
 import app_llm
 import pandas as pd
@@ -5,20 +6,32 @@ import matplotlib.pyplot as plt
 from matplotlib import font_manager, rc
 from koreanize_matplotlib import koreanize
 import datetime
+from matplotlib import font_manager
+import matplotlib as mpl
+
+
 
 # ============================================================
 # 전역 설정
 # ============================================================
-try:
-    font_path = "/System/Library/Fonts/AppleSDGothicNeo.ttc"
-    font_name = font_manager.FontProperties(fname=font_path).get_name()
-except:
-    font_path = "C:/Windows/Fonts/malgun.ttf"
-    font_name = font_manager.FontProperties(fname=font_path).get_name()
-rc('font', family=font_name)
-plt.rcParams['axes.unicode_minus'] = False
-plt.style.use('seaborn-v0_8-whitegrid')
-koreanize()
+font_candidates = [
+    "/System/Library/Fonts/AppleSDGothicNeo.ttc",           # mac
+    "C:/Windows/Fonts/malgun.ttf",                          # windows
+    str(Path(__file__).parent / "assets/fonts/NanumGothic.ttf"),  # repo local (추천)
+    "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",      # linux (packages.txt로 설치 시 가능)
+]
+
+font_name = None
+for p in font_candidates:
+    try:
+        if Path(p).exists():
+            font_name = font_manager.FontProperties(fname=p).get_name()
+            rc("font", family=font_name)
+            break
+    except Exception:
+        pass
+
+plt.rcParams["axes.unicode_minus"] = False
 
 # ============================================================
 # 데이터 로딩
