@@ -8,6 +8,7 @@ import datetime
 import matplotlib as mpl
 import os
 import warnings
+from koreanize_matplotlib import koreanize
 
 warnings.filterwarnings('ignore')
 
@@ -83,6 +84,7 @@ def load_data():
 # 메인 홈 화면
 # ============================================================
 def run_home():
+    koreanize()
     # ============================================================
     # 메인 헤더 - 파도 패턴 배경
     # ============================================================
