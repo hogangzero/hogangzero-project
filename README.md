@@ -394,10 +394,13 @@ streamlit run app.py
 
 **권회민**
 - GitHub: [@gwonhoemin](https://github.com/gwonhoemin)
+
 **김형준**
 - GitHub: [@devel-hj](https://github.com/devel-hj)
+
 **김동현**
 - GitHub: [@klop57](https://github.com/klop57)
+
 **김민준**
 - GitHub: [@kmjun3203](https://github.com/kmjun3203)
 
