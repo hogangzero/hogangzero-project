@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib import rc
 import warnings
+import streamlit.components.v1 as components
+
 warnings.filterwarnings('ignore')
 
 # ============================================================
@@ -469,15 +471,14 @@ def species_price():
                     st.markdown(f"""
                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                                 padding: 10px; border-radius: 10px; color: white; height: 180px;">
-                    <p style="margin: 0; font-size: 15px; opacity: 0.95;"> 
-                        <h4>{trend_emoji} 가격 추세</h4>
-                        <p style="font-size: 12px; line-height: 1.5;">
-                        <b style="color: {trend_color};">{trend_text}</b><br/>
-                        {trend_desc}
+                        <h4 style="margin: 0 0 8px 0;">{trend_emoji} 가격 추세</h4>
+                        <p style="margin: 0; font-size: 12px; line-height: 1.5;">
+                            <b style="color: {trend_color};">{trend_text}</b><br/>
+                            {trend_desc}
                         </p>
-                        <p style="font-size: 12px; margin-top: 10px; opacity: 0.9;">
-                        변화율: {abs(trend_change):.1f}%<br/>
-                        최근 평균: {recent_30:,.0f}원
+                        <p style="margin: 10px 0 0 0; font-size: 12px; opacity: 0.9;">
+                            변화율: {abs(trend_change):.1f}%<br/>
+                            최근 평균: {recent_30:,.0f}원
                         </p>
                     </div>
                     """, unsafe_allow_html=True)
@@ -508,26 +509,23 @@ def species_price():
                     st.markdown(f"""
                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                                 padding: 10px; border-radius: 10px; color: white; height: 180px;">
-                        <h4>{vol_emoji} 가격 변동성</h4>
-                        <p style="font-size: 12px; line-height: 1.5;">
-                        변동성: <b style="color: {vol_color};">{volatility_level}</b><br/>
-                        {volatility_desc}
+                        <h4 style="margin: 0 0 8px 0;">{vol_emoji} 가격 변동성</h4>
+                        <p style="margin: 0; font-size: 12px; line-height: 1.5;">
+                            변동성: <b style="color: {vol_color};">{volatility_level}</b><br/>
+                            {volatility_desc}
                         </p>
-                        <p style="font-size: 12px; margin-top: 1px; opacity: 1.5;">
-                        변동계수: {price_volatility:.1f}%<br/>
-                        가격 범위: {price_range:,.0f}원
+                        <p style="margin: 10px 0 0 0; font-size: 12px; opacity: 0.9;">
+                            변동계수: {price_volatility:.1f}%<br/>
+                            가격 범위: {price_range:,.0f}원
                         </p>
                     </div>
                     """, unsafe_allow_html=True)
-
     
-                    
-
     # -------------------------------------------------
     # ② 파일어종 및 세부 어종별 낙찰가 비교
     # -------------------------------------------------
-    st.markdown('---')
-
+    st.markdown("---")
+    
     st.subheader("② 품종 및 상태별 어종 경매가 ")
     # 설명 캡션 추가
     st.markdown("""
@@ -544,6 +542,7 @@ def species_price():
     file_species = st.selectbox(
         "어종을 선택하세요 .", sorted(df.groupby('파일어종').size()[lambda x: x > 100].index))
     
+    st.markdown("")  # 공백 추가
     col3, col4 = st.columns(2)
     with col3:
         if not st.session_state.section2_show:
@@ -582,18 +581,17 @@ def species_price():
 
         if pure_species_list:
             st.markdown('품종을 선택해주세요')
-            col_species, col_state = st.columns([2.5, 1.5])
-
-            with col_species:
-                selected_pure_species_list = st.multiselect(
-                    "품종 선택 (최대 2개)", pure_species_list,
-                    key="pure_species_select", 
-                    max_selections=2,
-                    label_visibility="collapsed"
-                )
+            
+            selected_pure_species_list = st.multiselect(
+                "품종 선택 (최대 2개)", pure_species_list,
+                key="pure_species_select", 
+                max_selections=2,
+                label_visibility="collapsed"
+            )
             
             if not selected_pure_species_list:
                 st.warning("하나 이상의 품종을 선택해주세요.")
+                st.stop()
     
             species_list = []
             for selected_pure_species in selected_pure_species_list:
@@ -616,18 +614,11 @@ def species_price():
                 selected_state = state_shortname_map.get(selected_state_full, selected_state_full)
                 species_list.append(f"({selected_state}){selected_pure_species}")
 
-            species = species_list
-
         else:
             st.warning("분류 가능한 품종이 없습니다.")
             st.stop()
-
-                
-        show_analysis = True
-        if not selected_pure_species_list:
-            show_analysis = False
         
-        if show_analysis and species_list:
+        if species_list:
             results = []
             display_dfs = []
             
@@ -730,7 +721,7 @@ def species_price():
                         trend_text = "안정 추세"
                         trend_emoji = ""
                         trend_color = "#3498db"
-                    
+
                     st.markdown(f"""
                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                                 padding: 9px; border-radius: 10px; color: white; height: 180px;">
@@ -777,8 +768,8 @@ def species_price():
                 
                 with col_i3:
                     # 최적 거래 시기 (월별 평균)
-                    if 'date' in single_result.columns:
-                        result_with_month = single_result.copy()
+                    try:
+                        result_with_month = single_result.reset_index().copy()
                         result_with_month['month'] = pd.to_datetime(result_with_month['date']).dt.month
                         monthly_avg = result_with_month.groupby('month')['평균가'].mean()
                         best_month = monthly_avg.idxmin()
@@ -798,23 +789,16 @@ def species_price():
                             </p>
                         </div>
                         """, unsafe_allow_html=True)
-                    else:
-                        st.markdown("""
+                    except Exception as e:
+                        st.markdown(f"""
                         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);  
                                     padding: 10px; border-radius: 10px; color: white; height: 180px;">
                             <h4> 거래 정보</h4>
                             <p style="font-size: 15px; line-height: 1.8;">
-                            선택한 품종과 상태의<br/>
-                            데이터를 분석 중입니다.
+                            데이터 분석 중입니다.
                             </p>
                         </div>
                         """, unsafe_allow_html=True)
-            else:
-                # 여러 품종 선택 또는 품종 미선택 시 상세 카드는 표시하지 않음
-                if not selected_pure_species_list:
-                    st.info("품종을 선택하면 상세 정보가 표시됩니다.")
-                else:
-                    st.info("여러 품종을 선택하셨습니다. 상세 메트릭과 인사이트는 품종을 하나만 선택했을 때 표시됩니다.")
             
 
     st.markdown("---")
@@ -833,7 +817,8 @@ def species_price():
     </div>
     """, unsafe_allow_html=True)
     st.markdown('---')
-
+    
+    st.markdown("")  # 공백 추가
     col5, col6 = st.columns(2)
     with col5:
         if not st.session_state.section3_show:
@@ -895,36 +880,32 @@ def species_price():
 
         if merged.empty:
             st.warning("선택한 산지와 어종의 결합 데이터가 없습니다.")
-        else:
-            merged['연월'] = merged['year'].astype(str) + '-' + merged['month'].astype(str).str.zfill(2)
-            
-
-
-            st.write(f"결합된 데이터 수: {len(merged)}")
-            st.dataframe(merged, height=400)
-
-            st.markdown('---')
-
-            # compact ocean variable selector
-            col_vars, col_vars_spacer = st.columns([2.5, 1])
-
-
-
-            with col_vars:
-                ocean_vars = st.multiselect(
-                    "해양 변수",
-                    ocean_cols,
-                    default=['수온 평균'],
-                    key="ocean_vars_select",
-                    label_visibility="collapsed",
-                )
-            if not ocean_vars:
-                st.warning("비교할 변수를 선택해주세요.")
-            else:
-                plot_ocean_metrics(merged, ocean_vars, selected_market, selected_file_species)
-
+            st.stop()
         
-            # ==================== 메트릭 카드 섹션 (맨 아래로 이동) ====================
+        merged['연월'] = merged['year'].astype(str) + '-' + merged['month'].astype(str).str.zfill(2)
+        st.write(f"결합된 데이터 수: {len(merged)}")
+        st.dataframe(merged, height=400)
+
+        st.markdown('---')
+
+        # compact ocean variable selector
+        col_vars, col_vars_spacer = st.columns([2.5, 1])
+
+        with col_vars:
+            ocean_vars = st.multiselect(
+                "해양 변수",
+                ocean_cols,
+                default=['수온 평균'],
+                key="ocean_vars_select",
+                label_visibility="collapsed",
+            )
+        if not ocean_vars:
+            st.warning("비교할 변수를 선택해주세요.")
+        else:
+            plot_ocean_metrics(merged, ocean_vars, selected_market, selected_file_species)
+
+    
+        # ==================== 메트릭 카드 섹션 (맨 아래로 이동) ====================
         st.markdown("---")
 
         # 모든 어종에 대한 상관관계 계산
@@ -938,12 +919,12 @@ def species_price():
         avg_temp = merged['수온 평균'].mean()
         
         # 가격 변동성 계산
-        price_volatility = (merged['평균가'].std() / avg_price * 100)
+        price_volatility = (merged['평균가'].std() / avg_price * 100) if avg_price > 0 else 0
         
         # 상관계수 계산
-        corr_temp = merged['평균가'].corr(merged['수온 평균'])
-        corr_air = merged['평균가'].corr(merged['기온 평균'])
-        corr_wind = merged['평균가'].corr(merged['풍속 평균'])
+        corr_temp = merged['평균가'].corr(merged['수온 평균']) if len(merged) > 1 else 0
+        corr_air = merged['평균가'].corr(merged['기온 평균']) if len(merged) > 1 else 0
+        corr_wind = merged['평균가'].corr(merged['풍속 평균']) if len(merged) > 1 else 0
         
         # 4개 메트릭 카드
         col1, col2, col3, col4 = st.columns(4)
@@ -1080,18 +1061,21 @@ def species_price():
         
         with col_i2:
             # 계절별 가격 패턴
-            merged['season'] = merged['month'].apply(
-                lambda x: '겨울' if x in [12, 1, 2] 
-                else '봄' if x in [3, 4, 5]
-                    
-                else '여름' if x in [6, 7, 8]
-                else '가을'
-            )
-
+            def get_season(month):
+                if month in [12, 1, 2]:
+                    return '겨울'
+                elif month in [3, 4, 5]:
+                    return '봄'
+                elif month in [6, 7, 8]:
+                    return '여름'
+                else:
+                    return '가을'
+            
+            merged['season'] = merged['month'].apply(get_season)
             season_avg = merged.groupby('season')['평균가'].mean()
             highest_season = season_avg.idxmax()
             lowest_season = season_avg.idxmin()
-            season_diff = ((season_avg.max() - season_avg.min()) / season_avg.mean() * 100)
+            season_diff = ((season_avg.max() - season_avg.min()) / season_avg.mean() * 100) if season_avg.mean() > 0 else 0
             
             st.markdown(f"""
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
