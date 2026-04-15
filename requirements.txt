@@ -13,6 +13,7 @@ langchain_text_splitters
 prophet
 joblib
 plotly
+protobuf<4.21.0
 chromadb
 pypdf
 Pillow
